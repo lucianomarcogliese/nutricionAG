@@ -1,0 +1,526 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── NextAuth required models ───────────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Users & profiles ────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  role            Role           @default(USER)
+  nutricionistaId String?        @unique
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  accounts        Account[]
+  sessions        Session[]
+  profile         Profile?
+  appointments    Appointment[]
+  nutricionista   Nutritionist?  @relation(fields: [nutricionistaId], references: [id])
+}
+
+model Profile {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  fullName             String?
+  avatarUrl            String?
+  subscriptionStatus   SubscriptionStatus @default(FREE)
+  stripeCustomerId     String?            @unique
+  onboardingCompleted  Boolean            @default(false)
+  age                  Int?
+  weightKg             Float?
+  heightCm             Float?
+  sex                  Sex?
+  goal                 Goal?
+  activityLevel        ActivityLevel?
+  dietaryRestrictions  String[]
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nutritionPlans   NutritionPlan[]
+  userRoutines     UserRoutine[]
+  subscription     Subscription?
+  weightEntries    WeightEntry[]
+  favoritos        RecetaFavorita[]
+  chatMessages     ChatMessage[]
+  conversaciones   Conversacion[]
+  antropometrias   Antropometria[]
+}
+
+// ─── Chat ────────────────────────────────────────────────────────────────────
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  contenido String
+  profileId String
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// ─── Nutrition ───────────────────────────────────────────────────────────────
+
+model NutritionPlan {
+  id             String   @id @default(cuid())
+  profileId      String
+  name           String
+  caloriesTarget Int?
+  proteinTargetG Int?
+  carbsTargetG   Int?
+  fatTargetG     Int?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  meals   Meal[]
+}
+
+model Meal {
+  id            String   @id @default(cuid())
+  planId        String
+  name          String
+  scheduledTime String?  // "08:00", "13:00", etc.
+  orderIndex    Int      @default(0)
+
+  plan      NutritionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  foodItems FoodItem[]
+}
+
+model FoodItem {
+  id         String   @id @default(cuid())
+  mealId     String
+  name       String
+  quantityG  Decimal? @db.Decimal(8, 2)
+  calories   Decimal? @db.Decimal(8, 2)
+  proteinG   Decimal? @db.Decimal(8, 2)
+  carbsG     Decimal? @db.Decimal(8, 2)
+  fatG       Decimal? @db.Decimal(8, 2)
+
+  meal Meal @relation(fields: [mealId], references: [id], onDelete: Cascade)
+}
+
+// ─── Training ────────────────────────────────────────────────────────────────
+
+model TrainingRoutine {
+  id              String      @id @default(cuid())
+  title           String
+  description     String?     @db.Text
+  difficulty      Difficulty?
+  durationMinutes Int?
+  thumbnailUrl    String?
+  requiredPlan    SubscriptionStatus @default(FREE)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  exerciseVideos ExerciseVideo[]
+}
+
+model ExerciseVideo {
+  id              String  @id @default(cuid())
+  routineId       String
+  title           String
+  videoUrl        String
+  thumbnailUrl    String?
+  durationSeconds Int?
+  orderIndex      Int     @default(0)
+
+  routine TrainingRoutine @relation(fields: [routineId], references: [id], onDelete: Cascade)
+}
+
+// ─── User Routines ───────────────────────────────────────────────────────────
+
+model UserRoutine {
+  id          String   @id @default(cuid())
+  profileId   String
+  name        String
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  profile   Profile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  exercises UserExercise[]
+}
+
+model UserExercise {
+  id         String @id @default(cuid())
+  routineId  String
+  name       String
+  sets       Int
+  reps       Int
+  orderIndex Int    @default(0)
+
+  routine UserRoutine @relation(fields: [routineId], references: [id], onDelete: Cascade)
+}
+
+// ─── Recetas ─────────────────────────────────────────────────────────────────
+
+model Receta {
+  id          String   @id @default(cuid())
+  titulo      String
+  descripcion String?
+  imagenUrl   String?
+  ingredientes Json
+  pasos        Json
+  calorias    Int?
+  proteinas   Float?
+  carbos      Float?
+  grasas      Float?
+  activo      Boolean  @default(true)
+  orden       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  favoritos RecetaFavorita[]
+}
+
+model RecetaFavorita {
+  id        String   @id @default(cuid())
+  profileId String
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  recetaId  String
+  receta    Receta   @relation(fields: [recetaId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([profileId, recetaId])
+}
+
+// ─── Descuentos ──────────────────────────────────────────────────────────────
+
+model Descuento {
+  id               String    @id @default(cuid())
+  titulo           String
+  descripcion      String
+  marca            String
+  logoUrl          String?
+  imagenUrl        String?
+  codigo           String?
+  porcentaje       Int?
+  link             String?
+  categoria        String
+  planMinimo       String    @default("PRO")
+  activo           Boolean   @default(true)
+  fechaVencimiento DateTime?
+  orden            Int       @default(0)
+  createdAt        DateTime  @default(now())
+}
+
+// ─── Testimonios ─────────────────────────────────────────────────────────────
+
+model Testimonio {
+  id         String   @id @default(cuid())
+  nombre     String
+  antesUrl   String
+  despuesUrl String
+  kilos      Float?
+  meses      Int?
+  testimonio String?
+  objetivo   String?
+  activo     Boolean  @default(true)
+  orden      Int      @default(0)
+  createdAt  DateTime @default(now())
+}
+
+// ─── Weight Tracking ─────────────────────────────────────────────────────────
+
+model WeightEntry {
+  id        String   @id @default(cuid())
+  profileId String
+  weightKg  Float
+  fecha     DateTime @default(now())
+  notas     String?
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, fecha])
+}
+
+// ─── Nutritionists ───────────────────────────────────────────────────────────
+
+model Nutritionist {
+  id             String        @id @default(cuid())
+  nombre         String
+  matricula      String        @unique
+  especialidades String[]
+  color          String
+  activo         Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  appointments   Appointment[]
+  conversaciones Conversacion[]
+  antropometrias Antropometria[]
+  user           User?
+}
+
+// ─── Appointments ────────────────────────────────────────────────────────────
+
+model Appointment {
+  id               String            @id @default(cuid())
+  userId           String
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nutricionistaId  String?
+  nutricionista    Nutritionist?     @relation(fields: [nutricionistaId], references: [id])
+  fecha            DateTime
+  duracion         Int               @default(60)
+  tipo             AppointmentType
+  estado           AppointmentStatus @default(PENDIENTE)
+  notas            String?
+  creadoAt         DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+// ─── Antropometría ───────────────────────────────────────────────────────────
+
+model Antropometria {
+  id              String       @id @default(cuid())
+  profileId       String
+  profile         Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  nutricionistaId String?
+  nutricionista   Nutritionist? @relation(fields: [nutricionistaId], references: [id])
+  fecha           DateTime     @default(now())
+
+  // Medidas básicas
+  pesoKg          Float
+  tallaCm         Float
+
+  // Perímetros (cm)
+  cinturaCm       Float?
+  caderaCm        Float?
+  brazoCm         Float?
+  musloDerechoCm  Float?
+  pantorrillaDerechaCm Float?
+
+  // Pliegues cutáneos (mm) — Yuhasz + Heath-Carter
+  pliegueSubescapular Float?
+  pliegueTriceps      Float?
+  pliegueSuprailiaco  Float?
+  pliegueAbdominal    Float?
+  pliegueMusloAnterior Float?
+  plieguePantorrilla  Float?
+  pliegueAxilarMedio  Float?
+  plieguePectoral     Float?
+
+  // Diámetros óseos (cm) — Martin
+  diametroBiepicondileoFemoral  Float?
+  diametroBiepicondileoHumeral  Float?
+  diametroMunieca               Float?
+
+  // Resultados calculados
+  imc              Float?
+  icc              Float?
+  porcentajeGrasa  Float?
+  masaGrasaKg      Float?
+  masaMagraKg      Float?
+  masaOseaKg       Float?
+  masaMuscularKg   Float?
+  endomorfismo     Float?
+  mesomorfismo     Float?
+  ectomorfismo     Float?
+
+  notas           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([profileId, fecha])
+}
+
+// ─── Landing Content ─────────────────────────────────────────────────────────
+
+model LandingContent {
+  id        String   @id @default(cuid())
+  seccion   String   @unique
+  contenido Json
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Plan Config (configurable desde admin) ──────────────────────────────────
+
+model PlanConfig {
+  id          String   @id @default(cuid())
+  nombre      String   @unique
+  displayName String
+  precioARS   Float
+  permisos    Json
+  activo      Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+}
+
+// ─── Mensajes Privados ────────────────────────────────────────────────────────
+
+model Conversacion {
+  id              String         @id @default(cuid())
+  profileId       String
+  profile         Profile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  nutricionistaId String
+  nutricionista   Nutritionist   @relation(fields: [nutricionistaId], references: [id])
+  mensajes        MensajePrivado[]
+  ultimoMensaje   DateTime       @default(now())
+  createdAt       DateTime       @default(now())
+
+  @@unique([profileId, nutricionistaId])
+}
+
+model MensajePrivado {
+  id             String       @id @default(cuid())
+  conversacionId String
+  conversacion   Conversacion @relation(fields: [conversacionId], references: [id], onDelete: Cascade)
+  contenido      String
+  autorId        String
+  esNutricionista Boolean     @default(false)
+  leido          Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  @@index([conversacionId, createdAt])
+}
+
+// ─── Subscriptions ───────────────────────────────────────────────────────────
+
+model SubscriptionPlan {
+  id             String  @id @default(cuid())
+  name           String
+  slug           SubscriptionStatus @unique
+  priceMonthly   Decimal? @db.Decimal(10, 2)
+  stripePriceId  String?  @unique
+  features       Json     @default("[]")
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id                   String          @id @default(cuid())
+  profileId            String          @unique
+  // Legacy Stripe fields (mantenidos para compatibilidad)
+  planId               String?
+  stripeSubscriptionId String?         @unique
+  status               SubscriptionStatus2?
+  currentPeriodEnd     DateTime?
+  // Campos MercadoPago
+  plan                 String          @default("GRATIS")
+  estado               PlanEstado      @default(ACTIVA)
+  mpPaymentId          String?
+  mpPreferenceId       String?
+  fechaInicio          DateTime        @default(now())
+  fechaVencimiento     DateTime?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  profile         Profile           @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  subscriptionPlan SubscriptionPlan? @relation(fields: [planId], references: [id])
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum SubscriptionStatus {
+  FREE
+  BASIC
+  PREMIUM
+}
+
+enum SubscriptionStatus2 {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  TRIALING
+}
+
+enum PlanEstado {
+  ACTIVA
+  VENCIDA
+  CANCELADA
+  PENDIENTE
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum Sex {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum Goal {
+  LOSE_WEIGHT
+  GAIN_MUSCLE
+  MAINTAIN
+}
+
+enum ActivityLevel {
+  SEDENTARY
+  LIGHTLY_ACTIVE
+  MODERATELY_ACTIVE
+  VERY_ACTIVE
+  EXTREMELY_ACTIVE
+}
+
+enum Role {
+  USER
+  ADMIN
+  NUTRICIONISTA
+  RECEPCIONISTA
+}
+
+enum AppointmentType {
+  CONSULTA_NUTRICIONAL
+  SEGUIMIENTO
+  ANTROPOMETRIA
+  CONSULTA_DEPORTIVA
+}
+
+enum AppointmentStatus {
+  PENDIENTE
+  CONFIRMADO
+  CANCELADO
+  COMPLETADO
+}
