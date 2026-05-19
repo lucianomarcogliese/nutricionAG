@@ -31,7 +31,7 @@ export async function PATCH(
     }
 
     const { id } = await params
-    const existing = await (prisma as any).testimonio.findUnique({ where: { id } })
+    const existing = await prisma.testimonio.findUnique({ where: { id } })
     if (!existing) return NextResponse.json({ error: "No encontrado" }, { status: 404 })
 
     const contentType = req.headers.get("content-type") ?? ""
@@ -89,7 +89,7 @@ export async function PATCH(
       if (body.activo !== undefined) updates.activo = body.activo
     }
 
-    const updated = await (prisma as any).testimonio.update({ where: { id }, data: updates })
+    const updated = await prisma.testimonio.update({ where: { id }, data: updates })
     return NextResponse.json({ testimonio: updated })
   } catch (error) {
     console.error("PATCH /api/admin/testimonios/[id] error:", error instanceof Error ? error.message : error)
@@ -108,7 +108,7 @@ export async function DELETE(
     }
 
     const { id } = await params
-    const existing = await (prisma as any).testimonio.findUnique({ where: { id } })
+    const existing = await prisma.testimonio.findUnique({ where: { id } })
     if (!existing) return NextResponse.json({ error: "No encontrado" }, { status: 404 })
 
     // Eliminar imágenes de Cloudinary (best effort)
@@ -119,7 +119,7 @@ export async function DELETE(
       despuesId ? cloudinary.uploader.destroy(despuesId).catch(() => {}) : Promise.resolve(),
     ])
 
-    await (prisma as any).testimonio.delete({ where: { id } })
+    await prisma.testimonio.delete({ where: { id } })
     return NextResponse.json({ ok: true })
   } catch (error) {
     console.error("DELETE /api/admin/testimonios/[id] error:", error instanceof Error ? error.message : error)

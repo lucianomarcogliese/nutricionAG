@@ -27,10 +27,17 @@ export default async function PlanesPage() {
     subscription = profile?.subscription ?? null
   }
 
+  type Permisos = { maxPlanes: number; maxRutinas: number; usarIA: boolean; consultasProfesionales: boolean }
+
   return (
     <PlanesClient
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      planes={planes as any}
+      planes={planes.map((p) => ({
+        id: p.id,
+        nombre: p.nombre,
+        displayName: p.displayName,
+        precioARS: p.precioARS,
+        permisos: p.permisos as unknown as Permisos,
+      }))}
       subscription={subscription ? {
         plan: subscription.plan,
         estado: subscription.estado,

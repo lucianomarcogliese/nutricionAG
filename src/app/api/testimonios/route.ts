@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET() {
   try {
-    const testimonios = await (prisma as any).testimonio.findMany({
+    const testimonios = await prisma.testimonio.findMany({
       where: { activo: true },
       orderBy: { orden: "asc" },
     })

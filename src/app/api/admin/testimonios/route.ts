@@ -23,7 +23,7 @@ export async function GET() {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const testimonios = await (prisma as any).testimonio.findMany({
+    const testimonios = await prisma.testimonio.findMany({
       orderBy: { orden: "asc" },
     })
     return NextResponse.json({ testimonios })
@@ -58,12 +58,12 @@ export async function POST(req: NextRequest) {
       uploadToCloudinary(despuesFile),
     ])
 
-    const count = await (prisma as any).testimonio.count()
+    const count = await prisma.testimonio.count()
 
     const kilosRaw = formData.get("kilos")
     const mesesRaw = formData.get("meses")
 
-    const testimonio = await (prisma as any).testimonio.create({
+    const testimonio = await prisma.testimonio.create({
       data: {
         nombre,
         antesUrl: antes.url,

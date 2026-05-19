@@ -263,19 +263,21 @@ export function RecetasTab() {
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-2">Información nutricional</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { key: "calorias", label: "Calorías (kcal)" },
-                    { key: "proteinas", label: "Proteínas (g)" },
-                    { key: "carbos", label: "Carbos (g)" },
-                    { key: "grasas", label: "Grasas (g)" },
-                  ].map(({ key, label }) => (
+                  {(
+                    [
+                      { key: "calorias", label: "Calorías (kcal)" },
+                      { key: "proteinas", label: "Proteínas (g)" },
+                      { key: "carbos", label: "Carbos (g)" },
+                      { key: "grasas", label: "Grasas (g)" },
+                    ] as Array<{ key: keyof typeof EMPTY_FORM; label: string }>
+                  ).map(({ key, label }) => (
                     <div key={key}>
                       <label className="block text-[10px] text-gray-500 mb-1">{label}</label>
                       <input
                         type="number"
                         min="0"
                         step="0.1"
-                        value={(form as any)[key]}
+                        value={form[key]}
                         onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
                         className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
                       />

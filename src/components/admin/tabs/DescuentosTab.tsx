@@ -226,16 +226,18 @@ export function DescuentosTab() {
               </div>
 
               {/* Campos principales */}
-              {[
-                { key: "titulo", label: "Título *", placeholder: "Ej: 20% en suplementos" },
-                { key: "marca", label: "Marca *", placeholder: "Ej: MyProtein" },
-                { key: "descripcion", label: "Descripción *", placeholder: "Descripción del beneficio..." },
-              ].map(({ key, label, placeholder }) => (
+              {(
+                [
+                  { key: "titulo", label: "Título *", placeholder: "Ej: 20% en suplementos" },
+                  { key: "marca", label: "Marca *", placeholder: "Ej: MyProtein" },
+                  { key: "descripcion", label: "Descripción *", placeholder: "Descripción del beneficio..." },
+                ] as Array<{ key: keyof typeof EMPTY_FORM; label: string; placeholder: string }>
+              ).map(({ key, label, placeholder }) => (
                 <div key={key}>
                   <label className="block text-xs font-medium text-gray-700 mb-1">{label}</label>
                   {key === "descripcion"
-                    ? <textarea value={(form as any)[key]} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} rows={2} placeholder={placeholder} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 resize-none" />
-                    : <input type="text" value={(form as any)[key]} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} placeholder={placeholder} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+                    ? <textarea value={form[key]} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} rows={2} placeholder={placeholder} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 resize-none" />
+                    : <input type="text" value={form[key]} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} placeholder={placeholder} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400" />
                   }
                 </div>
               ))}

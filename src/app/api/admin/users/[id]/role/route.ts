@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
+import { Role } from "@/generated/prisma/client"
 
-const ALLOWED_ROLES = ["USER", "NUTRICIONISTA", "RECEPCIONISTA", "ADMIN"]
+const ALLOWED_ROLES = Object.values(Role)
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -28,7 +29,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const updated = await prisma.user.update({
       where: { id },
-      data: { role: role as any },
+      data: { role: role as Role },
       select: { id: true, name: true, email: true, role: true },
     })
 

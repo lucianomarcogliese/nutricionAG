@@ -15,7 +15,7 @@ interface Testimonio {
 
 async function getTestimonios(): Promise<Testimonio[]> {
   try {
-    return await (prisma as any).testimonio.findMany({
+    return await prisma.testimonio.findMany({
       where: { activo: true },
       orderBy: { orden: "asc" },
       select: { id: true, nombre: true, antesUrl: true, despuesUrl: true, kilos: true, meses: true, testimonio: true, objetivo: true },
