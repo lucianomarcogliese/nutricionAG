@@ -1,11 +1,42 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { MercadoPagoConfig, Payment } from "mercadopago"
+import crypto from "crypto"
 
 const mpClient = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
 })
 const paymentClient = new Payment(mpClient)
+
+function verifyMPSignature(req: NextRequest, paymentId: string): boolean {
+  const secret = process.env.MP_WEBHOOK_SECRET
+  if (!secret) return false
+
+  const xSignature = req.headers.get("x-signature") ?? ""
+  const xRequestId = req.headers.get("x-request-id") ?? ""
+
+  const tsMatch = xSignature.match(/ts=([^,]+)/)
+  const v1Match = xSignature.match(/v1=([^,]+)/)
+  if (!tsMatch || !v1Match) return false
+
+  const ts = tsMatch[1]
+  const receivedHash = v1Match[1]
+
+  const manifest = `id:${paymentId};request-id:${xRequestId};ts:${ts}`
+  const expectedHash = crypto
+    .createHmac("sha256", secret)
+    .update(manifest)
+    .digest("hex")
+
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(receivedHash, "hex"),
+      Buffer.from(expectedHash, "hex")
+    )
+  } catch {
+    return false
+  }
+}
 
 // MercadoPago reintenta si no recibe 200 — siempre retornar 200
 export async function POST(req: NextRequest) {
@@ -16,8 +47,6 @@ export async function POST(req: NextRequest) {
       data?: { id?: string | number }
     }
 
-    console.log('Webhook recibido:', body)
-
     // Solo procesar notificaciones de pago
     if (body.type !== "payment" && body.action !== "payment.updated") {
       return NextResponse.json({ ok: true })
@@ -25,6 +54,11 @@ export async function POST(req: NextRequest) {
 
     const paymentId = body.data?.id
     if (!paymentId) return NextResponse.json({ ok: true })
+
+    if (!verifyMPSignature(req, String(paymentId))) {
+      console.error("Webhook MP: firma inválida")
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
 
     const payment = await paymentClient.get({ id: String(paymentId) })
 
