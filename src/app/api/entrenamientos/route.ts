@@ -39,6 +39,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const role = (session.user as { role?: string }).role
+    if (role !== "NUTRICIONISTA" && role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
     const profile = await prisma.profile.findUnique({
       where: { userId: session.user.id },
       select: { id: true },

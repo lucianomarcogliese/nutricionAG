@@ -6,7 +6,6 @@ declare module "next-auth" {
     user: {
       id: string
       role: string
-      subscriptionStatus: string
       profileId: string
       onboardingCompleted: boolean
       nutricionistaId?: string
@@ -18,7 +17,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string
     role: string
-    subscriptionStatus: string
     profileId: string
     onboardingCompleted: boolean
     nutricionistaId?: string

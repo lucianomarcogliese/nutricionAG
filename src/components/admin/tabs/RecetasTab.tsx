@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import Image from "next/image"
 
 interface Ingrediente { nombre: string; cantidad: string; unidad: string }
 interface Paso { orden: number; descripcion: string }
@@ -184,11 +185,11 @@ export function RecetasTab() {
             <div key={r.id} className={`bg-white rounded-xl border p-4 flex items-center gap-4 ${r.activo ? "border-gray-200" : "border-gray-100 opacity-60"}`}>
               {/* Imagen — clic abre detalle */}
               <div
-                className="shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center text-2xl cursor-pointer hover:opacity-80 transition-opacity"
+                className="shrink-0 relative w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center text-2xl cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => setDetalle(r)}
               >
                 {r.imagenUrl
-                  ? <img src={r.imagenUrl} alt={r.titulo} className="w-full h-full object-cover" />
+                  ? <Image fill src={r.imagenUrl} alt={r.titulo} className="object-cover" sizes="56px" />
                   : "🍽️"}
               </div>
 
@@ -235,9 +236,9 @@ export function RecetasTab() {
               {/* Imagen */}
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Imagen (opcional)</label>
-                <div onClick={() => imgRef.current?.click()} className="border-2 border-dashed border-gray-200 rounded-xl h-40 flex items-center justify-center cursor-pointer hover:border-emerald-400 transition-colors overflow-hidden">
+                <div onClick={() => imgRef.current?.click()} className="border-2 border-dashed border-gray-200 rounded-xl h-40 relative flex items-center justify-center cursor-pointer hover:border-emerald-400 transition-colors overflow-hidden">
                   {imagenPreview
-                    ? <img src={imagenPreview} alt="preview" className="w-full h-full object-cover rounded-xl" />
+                    ? <Image unoptimized fill src={imagenPreview} alt="preview" className="object-cover rounded-xl" sizes="100vw" />
                     : <span className="text-gray-400 text-sm">Clic para subir imagen</span>}
                 </div>
                 <input ref={imgRef} type="file" accept="image/*" className="hidden"
@@ -385,7 +386,9 @@ export function RecetasTab() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setDetalle(null)}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             {detalle.imagenUrl && (
-              <img src={detalle.imagenUrl} alt={detalle.titulo} className="w-full h-52 object-cover rounded-t-2xl" />
+              <div className="relative h-52">
+                <Image fill src={detalle.imagenUrl} alt={detalle.titulo} className="object-cover rounded-t-2xl" sizes="(max-width: 640px) 100vw, 512px" />
+              </div>
             )}
             <div className="p-6">
               <div className="flex items-start justify-between gap-3 mb-3">

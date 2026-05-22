@@ -3,6 +3,17 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import type { AppointmentStatus } from "@/generated/prisma/client"
+import { sendEmail } from "@/lib/email"
+import { cancelacionTurnoHtml, cancelacionTurnoSubject } from "@/emails/cancelacionTurno"
+
+function formatFecha(date: Date): string {
+  return date.toLocaleDateString("es-AR", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  })
+}
+function formatHora(date: Date): string {
+  return date.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false })
+}
 
 const VALID_ESTADOS = ["PENDIENTE", "CONFIRMADO", "CANCELADO", "COMPLETADO"]
 
@@ -43,6 +54,23 @@ export async function PATCH(
         nutricionista: { select: { id: true, nombre: true, color: true, matricula: true } },
       },
     })
+
+    if (data.estado === "CANCELADO" && appointment.user.email) {
+      try {
+        await sendEmail(
+          appointment.user.email,
+          cancelacionTurnoSubject,
+          cancelacionTurnoHtml({
+            nombre: appointment.user.name ?? "Usuario",
+            fecha: formatFecha(appointment.fecha),
+            hora: formatHora(appointment.fecha),
+            nutricionista: appointment.nutricionista?.nombre ?? "",
+          })
+        )
+      } catch (emailError) {
+        console.error("PATCH /api/admin/appointments/[id]: error enviando email de cancelación:", emailError instanceof Error ? emailError.message : emailError)
+      }
+    }
 
     return NextResponse.json({ appointment })
   } catch (error) {

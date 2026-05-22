@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import Image from "next/image"
 
 interface Descuento {
   id: string
@@ -153,9 +154,9 @@ export function DescuentosTab() {
           {lista.map((d, i) => (
             <div key={d.id} className={`bg-white rounded-xl border p-4 flex items-center gap-4 ${d.activo ? "border-gray-200" : "border-gray-100 opacity-60"}`}>
               {/* Logo */}
-              <div className="shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-400">
+              <div className="shrink-0 relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-400">
                 {d.logoUrl
-                  ? <img src={d.logoUrl} alt={d.marca} className="w-full h-full object-contain p-1" />
+                  ? <Image fill src={d.logoUrl} alt={d.marca} className="object-contain p-1" sizes="48px" />
                   : d.marca.charAt(0).toUpperCase()}
               </div>
 
@@ -207,18 +208,18 @@ export function DescuentosTab() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Logo de marca</label>
-                  <div onClick={() => logoRef.current?.click()} className="border-2 border-dashed border-gray-200 rounded-xl h-24 flex items-center justify-center cursor-pointer hover:border-emerald-400 transition-colors overflow-hidden">
+                  <div onClick={() => logoRef.current?.click()} className="border-2 border-dashed border-gray-200 rounded-xl h-24 relative flex items-center justify-center cursor-pointer hover:border-emerald-400 transition-colors overflow-hidden">
                     {logoPreview
-                      ? <img src={logoPreview} alt="logo" className="w-full h-full object-contain p-2" />
+                      ? <Image unoptimized fill src={logoPreview} alt="logo" className="object-contain p-2" sizes="100vw" />
                       : <span className="text-gray-400 text-xs text-center px-2">Logo</span>}
                   </div>
                   <input ref={logoRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setLogoFile(f); setLogoPreview(URL.createObjectURL(f)) } }} />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Imagen principal</label>
-                  <div onClick={() => imgRef.current?.click()} className="border-2 border-dashed border-gray-200 rounded-xl h-24 flex items-center justify-center cursor-pointer hover:border-emerald-400 transition-colors overflow-hidden">
+                  <div onClick={() => imgRef.current?.click()} className="border-2 border-dashed border-gray-200 rounded-xl h-24 relative flex items-center justify-center cursor-pointer hover:border-emerald-400 transition-colors overflow-hidden">
                     {imagenPreview
-                      ? <img src={imagenPreview} alt="imagen" className="w-full h-full object-cover rounded-xl" />
+                      ? <Image unoptimized fill src={imagenPreview} alt="imagen" className="object-cover rounded-xl" sizes="100vw" />
                       : <span className="text-gray-400 text-xs text-center px-2">Imagen</span>}
                   </div>
                   <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setImagenFile(f); setImagenPreview(URL.createObjectURL(f)) } }} />

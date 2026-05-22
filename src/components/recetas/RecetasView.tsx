@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import Image from "next/image"
 
 interface Ingrediente { nombre: string; cantidad: string; unidad: string }
 interface Paso { orden: number; descripcion: string }
@@ -34,7 +35,9 @@ function RecetaModal({ receta, onClose, onToggleFav }: { receta: Receta; onClose
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[92vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         {receta.imagenUrl && (
-          <img src={receta.imagenUrl} alt={receta.titulo} className="w-full h-52 object-cover rounded-t-2xl" />
+          <div className="relative h-52">
+            <Image fill src={receta.imagenUrl} alt={receta.titulo} className="object-cover rounded-t-2xl" sizes="(max-width: 640px) 100vw, 512px" />
+          </div>
         )}
         <div className="p-6">
           <div className="flex items-start justify-between gap-3 mb-3">
@@ -210,7 +213,7 @@ export function RecetasView() {
               {/* Imagen */}
               <div className="relative h-44 bg-gray-100 overflow-hidden">
                 {r.imagenUrl
-                  ? <img src={r.imagenUrl} alt={r.titulo} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  ? <Image fill src={r.imagenUrl} alt={r.titulo} className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
                   : <div className="w-full h-full flex items-center justify-center text-5xl">🍽️</div>
                 }
                 <button

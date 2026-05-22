@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import Image from "next/image"
 
 interface Descuento {
   id: string
@@ -119,8 +120,8 @@ export function DescuentosView() {
             <div key={d.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
               {/* Imagen principal */}
               {d.imagenUrl ? (
-                <div className="h-40 overflow-hidden">
-                  <img src={d.imagenUrl} alt={d.titulo} className="w-full h-full object-cover" />
+                <div className="relative h-40 overflow-hidden">
+                  <Image fill src={d.imagenUrl} alt={d.titulo} className="object-cover" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
                 </div>
               ) : (
                 <div className="h-40 bg-gradient-to-br from-emerald-50 to-emerald-100 flex items-center justify-center">
@@ -132,7 +133,7 @@ export function DescuentosView() {
                 {/* Logo + marca + categoría */}
                 <div className="flex items-center gap-2 mb-3">
                   {d.logoUrl ? (
-                    <img src={d.logoUrl} alt={d.marca} className="w-8 h-8 rounded-lg object-contain bg-gray-50 p-0.5 border border-gray-100" />
+                    <Image src={d.logoUrl} alt={d.marca} width={32} height={32} className="rounded-lg object-contain bg-gray-50 p-0.5 border border-gray-100" sizes="32px" />
                   ) : (
                     <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold">
                       {d.marca.charAt(0)}

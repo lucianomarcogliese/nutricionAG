@@ -13,8 +13,10 @@ import { PlanesAdminTab } from './tabs/PlanesAdminTab'
 import { MensajesAdminTab } from './tabs/MensajesAdminTab'
 import { NutricionistasTab } from './tabs/NutricionistasTab'
 import { AntropometriaTab } from './tabs/AntropometriaTab'
+import { EjerciciosTab } from './tabs/EjerciciosTab'
+import { TemplatesNutricionalesTab } from './tabs/TemplatesNutricionalesTab'
 
-type Tab = 'stats' | 'users' | 'calendar' | 'testimonios' | 'recetas' | 'descuentos' | 'planes' | 'mensajes' | 'nutricionistas' | 'antropometria' | 'landing'
+type Tab = 'stats' | 'users' | 'calendar' | 'testimonios' | 'recetas' | 'descuentos' | 'planes' | 'mensajes' | 'nutricionistas' | 'antropometria' | 'landing' | 'ejercicios' | 'templates-nutricionales'
 
 const ALL_NAV: { key: Tab; icon: string; label: string; roles: string[] }[] = [
   { key: 'stats',           icon: '📊', label: 'Estadísticas',   roles: ['ADMIN'] },
@@ -24,6 +26,8 @@ const ALL_NAV: { key: Tab; icon: string; label: string; roles: string[] }[] = [
   { key: 'testimonios',     icon: '📸', label: 'Testimonios',    roles: ['ADMIN'] },
   { key: 'recetas',         icon: '🍳', label: 'Recetas',        roles: ['ADMIN'] },
   { key: 'descuentos',      icon: '🏷️', label: 'Descuentos',    roles: ['ADMIN'] },
+  { key: 'ejercicios',      icon: '🏋️', label: 'Ejercicios',    roles: ['ADMIN'] },
+  { key: 'templates-nutricionales', icon: '🥗', label: 'Templates Nutri', roles: ['ADMIN', 'NUTRICIONISTA'] },
   { key: 'nutricionistas',  icon: '👨‍⚕️', label: 'Nutricionistas', roles: ['ADMIN'] },
   { key: 'antropometria',   icon: '📏', label: 'Antropometría',  roles: ['ADMIN', 'NUTRICIONISTA'] },
   { key: 'planes',          icon: '⚙️', label: 'Planes',         roles: ['ADMIN'] },
@@ -116,6 +120,8 @@ export function AdminDashboard({
             {active === 'planes'         && <PlanesAdminTab />}
             {active === 'mensajes'       && <MensajesAdminTab role={role} nutricionistaId={nutricionistaId} />}
             {active === 'landing'        && <LandingTab />}
+            {active === 'ejercicios'     && <EjerciciosTab />}
+            {active === 'templates-nutricionales' && <TemplatesNutricionalesTab />}
           </div>
         </main>
       </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import Image from "next/image"
 
 interface Testimonio {
   id: string
@@ -174,11 +175,11 @@ export function TestimoniosTab() {
               {/* Fotos */}
               <div className="flex gap-2 shrink-0">
                 <div className="relative">
-                  <img src={t.antesUrl} alt="Antes" className="w-16 h-20 object-cover rounded-lg" />
+                  <Image src={t.antesUrl} alt="Antes" width={64} height={80} className="object-cover rounded-lg" sizes="64px" />
                   <span className="absolute bottom-1 left-1 bg-black/60 text-white text-[9px] px-1 rounded">Antes</span>
                 </div>
                 <div className="relative">
-                  <img src={t.despuesUrl} alt="Después" className="w-16 h-20 object-cover rounded-lg" />
+                  <Image src={t.despuesUrl} alt="Después" width={64} height={80} className="object-cover rounded-lg" sizes="64px" />
                   <span className="absolute bottom-1 left-1 bg-black/60 text-white text-[9px] px-1 rounded">Después</span>
                 </div>
               </div>
@@ -270,10 +271,10 @@ export function TestimoniosTab() {
                   <label className="block text-xs font-medium text-gray-700 mb-1">Foto ANTES *</label>
                   <div
                     onClick={() => antesRef.current?.click()}
-                    className="border-2 border-dashed border-gray-200 rounded-xl h-36 flex items-center justify-center cursor-pointer hover:border-emerald-400 transition-colors overflow-hidden"
+                    className="border-2 border-dashed border-gray-200 rounded-xl h-36 relative flex items-center justify-center cursor-pointer hover:border-emerald-400 transition-colors overflow-hidden"
                   >
                     {antesPreview ? (
-                      <img src={antesPreview} alt="Antes" className="w-full h-full object-cover rounded-xl" />
+                      <Image unoptimized fill src={antesPreview} alt="Antes" className="object-cover rounded-xl" sizes="100vw" />
                     ) : (
                       <span className="text-gray-400 text-xs text-center px-2">Clic para subir</span>
                     )}
@@ -284,10 +285,10 @@ export function TestimoniosTab() {
                   <label className="block text-xs font-medium text-gray-700 mb-1">Foto DESPUÉS *</label>
                   <div
                     onClick={() => despuesRef.current?.click()}
-                    className="border-2 border-dashed border-gray-200 rounded-xl h-36 flex items-center justify-center cursor-pointer hover:border-emerald-400 transition-colors overflow-hidden"
+                    className="border-2 border-dashed border-gray-200 rounded-xl h-36 relative flex items-center justify-center cursor-pointer hover:border-emerald-400 transition-colors overflow-hidden"
                   >
                     {despuesPreview ? (
-                      <img src={despuesPreview} alt="Después" className="w-full h-full object-cover rounded-xl" />
+                      <Image unoptimized fill src={despuesPreview} alt="Después" className="object-cover rounded-xl" sizes="100vw" />
                     ) : (
                       <span className="text-gray-400 text-xs text-center px-2">Clic para subir</span>
                     )}

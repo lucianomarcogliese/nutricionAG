@@ -26,16 +26,28 @@ type RecetaRow = {
   activo: boolean; orden: number; createdAt: Date; updatedAt: Date
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
-    const recetas = await prisma.$queryRaw<RecetaRow[]>(
-      Prisma.sql`SELECT * FROM "Receta" ORDER BY orden ASC`
-    )
-    return NextResponse.json({ recetas })
+
+    const { searchParams } = req.nextUrl
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1)
+    const limit = Math.min(200, Math.max(1, parseInt(searchParams.get("limit") ?? "50", 10) || 50))
+    const offset = (page - 1) * limit
+
+    const [recetas, [{ total }]] = await Promise.all([
+      prisma.$queryRaw<RecetaRow[]>(
+        Prisma.sql`SELECT * FROM "Receta" ORDER BY orden ASC LIMIT ${limit} OFFSET ${offset}`
+      ),
+      prisma.$queryRaw<[{ total: number }]>(
+        Prisma.sql`SELECT COUNT(*)::int AS total FROM "Receta"`
+      ),
+    ])
+
+    return NextResponse.json({ recetas, total, page, totalPages: Math.ceil(total / limit) })
   } catch (error) {
     console.error("GET /api/admin/recetas error:", error)
     return NextResponse.json({ error: "Error al obtener recetas" }, { status: 500 })

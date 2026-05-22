@@ -2,8 +2,24 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
+import { appointmentSchema } from "@/lib/schemas/appointmentSchema"
+import { sendEmail } from "@/lib/email"
+import { confirmacionTurnoHtml, confirmacionTurnoSubject } from "@/emails/confirmacionTurno"
 
-const VALID_TIPOS = ["CONSULTA_NUTRICIONAL", "SEGUIMIENTO", "ANTROPOMETRIA", "CONSULTA_DEPORTIVA"]
+function formatFecha(date: Date): string {
+  return date.toLocaleDateString("es-AR", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  })
+}
+function formatHora(date: Date): string {
+  return date.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false })
+}
+const TIPO_LABELS: Record<string, string> = {
+  CONSULTA_NUTRICIONAL: "Consulta nutricional",
+  SEGUIMIENTO: "Seguimiento",
+  ANTROPOMETRIA: "Antropometría",
+  CONSULTA_DEPORTIVA: "Consulta deportiva",
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -59,17 +75,14 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { userId, fecha, duracion, tipo, notas, nutricionistaId } = body
-
-    if (!userId || !fecha || !tipo || !nutricionistaId) {
+    const result = appointmentSchema.safeParse(body)
+    if (!result.success) {
       return NextResponse.json(
-        { error: "userId, fecha, tipo y nutricionistaId son requeridos" },
+        { error: "Datos inválidos", details: result.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
-    if (!VALID_TIPOS.includes(tipo)) {
-      return NextResponse.json({ error: "Tipo de turno inválido" }, { status: 400 })
-    }
+    const { userId, nutricionistaId, fecha, tipo, duracion, notas } = result.data
 
     const [userExists, nutricionistaExists] = await Promise.all([
       prisma.user.findUnique({ where: { id: userId }, select: { id: true } }),
@@ -91,7 +104,7 @@ export async function POST(req: NextRequest) {
         userId,
         nutricionistaId,
         fecha: new Date(fecha),
-        duracion: duracion ?? 60,
+        duracion,
         tipo,
         notas: notas ?? null,
       },
@@ -100,6 +113,24 @@ export async function POST(req: NextRequest) {
         nutricionista: { select: { id: true, nombre: true, color: true, matricula: true } },
       },
     })
+
+    try {
+      if (appointment.user.email) {
+        await sendEmail(
+          appointment.user.email,
+          confirmacionTurnoSubject,
+          confirmacionTurnoHtml({
+            nombre: appointment.user.name ?? "Usuario",
+            fecha: formatFecha(appointment.fecha),
+            hora: formatHora(appointment.fecha),
+            nutricionista: appointment.nutricionista?.nombre ?? "",
+            tipo: TIPO_LABELS[appointment.tipo] ?? appointment.tipo,
+          })
+        )
+      }
+    } catch (emailError) {
+      console.error("POST /api/admin/appointments: error enviando email:", emailError instanceof Error ? emailError.message : emailError)
+    }
 
     return NextResponse.json({ appointment }, { status: 201 })
   } catch (error) {

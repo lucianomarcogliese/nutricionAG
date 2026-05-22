@@ -16,16 +16,28 @@ async function uploadImg(file: File, folder = "nutricion-ag/descuentos"): Promis
   return res.secure_url
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
-    const descuentos = await prisma.$queryRaw(
-      Prisma.sql`SELECT * FROM "Descuento" ORDER BY orden ASC`
-    )
-    return NextResponse.json({ descuentos })
+
+    const { searchParams } = req.nextUrl
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1)
+    const limit = Math.min(200, Math.max(1, parseInt(searchParams.get("limit") ?? "50", 10) || 50))
+    const offset = (page - 1) * limit
+
+    const [descuentos, [{ total }]] = await Promise.all([
+      prisma.$queryRaw<unknown[]>(
+        Prisma.sql`SELECT * FROM "Descuento" ORDER BY orden ASC LIMIT ${limit} OFFSET ${offset}`
+      ),
+      prisma.$queryRaw<[{ total: number }]>(
+        Prisma.sql`SELECT COUNT(*)::int AS total FROM "Descuento"`
+      ),
+    ])
+
+    return NextResponse.json({ descuentos, total, page, totalPages: Math.ceil(total / limit) })
   } catch (error) {
     console.error("GET /api/admin/descuentos error:", error)
     return NextResponse.json({ error: "Error al obtener descuentos" }, { status: 500 })

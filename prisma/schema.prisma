@@ -71,7 +71,6 @@ model Profile {
   userId               String             @unique
   fullName             String?
   avatarUrl            String?
-  subscriptionStatus   SubscriptionStatus @default(FREE)
   stripeCustomerId     String?            @unique
   onboardingCompleted  Boolean            @default(false)
   age                  Int?
@@ -81,6 +80,9 @@ model Profile {
   goal                 Goal?
   activityLevel        ActivityLevel?
   dietaryRestrictions  String[]
+  tipoActividad        String?
+  suplementosMedicacion String?
+  alergias             String[]
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
 
@@ -93,6 +95,8 @@ model Profile {
   chatMessages     ChatMessage[]
   conversaciones   Conversacion[]
   antropometrias   Antropometria[]
+  planesEntrenamiento PlanEntrenamiento[]
+  planesNutricionales PlanNutricional[]
 }
 
 // ─── Chat ────────────────────────────────────────────────────────────────────
@@ -149,7 +153,134 @@ model FoodItem {
   meal Meal @relation(fields: [mealId], references: [id], onDelete: Cascade)
 }
 
+// ─── Templates Nutricionales ─────────────────────────────────────────────────
+
+model TemplatePlan {
+  id              String           @id @default(cuid())
+  nombre          String
+  descripcion     String?
+  objetivo        ObjetivoPlan
+  recomendaciones String?
+  suplementos     String?
+  creadoEn        DateTime         @default(now())
+  comidas         TemplateComida[]
+}
+
+model TemplateComida {
+  id         String          @id @default(cuid())
+  templateId String
+  template   TemplatePlan    @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  nombre     String
+  orden      Int
+  nota       String?
+  ideasMenu  String?
+  grupos     TemplateGrupo[]
+}
+
+model TemplateGrupo {
+  id       String           @id @default(cuid())
+  comidaId String
+  comida   TemplateComida   @relation(fields: [comidaId], references: [id], onDelete: Cascade)
+  nombre   String
+  orden    Int
+  opciones TemplateOpcion[]
+}
+
+model TemplateOpcion {
+  id      String        @id @default(cuid())
+  grupoId String
+  grupo   TemplateGrupo @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+  texto   String
+  orden   Int
+}
+
+// ─── Planes Nutricionales (copia independiente del template) ──────────────────
+
+model PlanNutricional {
+  id                String       @id @default(cuid())
+  profileId         String
+  profile           Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  nombre            String
+  objetivo          ObjetivoPlan
+  notaNutricionista String?
+  recomendaciones   String?
+  suplementos       String?
+  fromTemplateId    String?
+  creadoEn          DateTime     @default(now())
+  actualizadoEn     DateTime     @updatedAt
+  comidas           PlanComida[]
+}
+
+model PlanComida {
+  id        String          @id @default(cuid())
+  planId    String
+  plan      PlanNutricional @relation(fields: [planId], references: [id], onDelete: Cascade)
+  nombre    String
+  orden     Int
+  nota      String?
+  ideasMenu String?
+  grupos    PlanGrupo[]
+}
+
+model PlanGrupo {
+  id       String      @id @default(cuid())
+  comidaId String
+  comida   PlanComida  @relation(fields: [comidaId], references: [id], onDelete: Cascade)
+  nombre   String
+  orden    Int
+  opciones PlanOpcion[]
+}
+
+model PlanOpcion {
+  id      String    @id @default(cuid())
+  grupoId String
+  grupo   PlanGrupo @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+  texto   String
+  orden   Int
+}
+
 // ─── Training ────────────────────────────────────────────────────────────────
+
+model Ejercicio {
+  id            String             @id @default(cuid())
+  nombre        String
+  descripcion   String?
+  videoUrl      String?
+  categoria     CategoriaEjercicio
+  creadoEn      DateTime           @default(now())
+  ejerciciosDia EjercicioDia[]
+}
+
+model PlanEntrenamiento {
+  id          String             @id @default(cuid())
+  nombre      String
+  descripcion String?
+  profileId   String
+  profile     Profile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  dias        DiaEntrenamiento[]
+  creadoEn    DateTime           @default(now())
+}
+
+model DiaEntrenamiento {
+  id         String             @id @default(cuid())
+  numero     Int
+  nombre     String?
+  planId     String
+  plan       PlanEntrenamiento  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  ejercicios EjercicioDia[]
+}
+
+model EjercicioDia {
+  id           String           @id @default(cuid())
+  diaId        String
+  dia          DiaEntrenamiento @relation(fields: [diaId], references: [id], onDelete: Cascade)
+  ejercicioId  String
+  ejercicio    Ejercicio        @relation(fields: [ejercicioId], references: [id])
+  series       Int?
+  repeticiones String?
+  descanso     Int?
+  orden        Int              @default(0)
+}
 
 model TrainingRoutine {
   id              String      @id @default(cuid())
@@ -189,6 +320,8 @@ model UserRoutine {
 
   profile   Profile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
   exercises UserExercise[]
+
+  @@index([profileId])
 }
 
 model UserExercise {
@@ -315,6 +448,8 @@ model Appointment {
   notas            String?
   creadoAt         DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
+
+  @@index([userId, fecha])
 }
 
 // ─── Antropometría ───────────────────────────────────────────────────────────
@@ -423,37 +558,19 @@ model MensajePrivado {
 
 // ─── Subscriptions ───────────────────────────────────────────────────────────
 
-model SubscriptionPlan {
-  id             String  @id @default(cuid())
-  name           String
-  slug           SubscriptionStatus @unique
-  priceMonthly   Decimal? @db.Decimal(10, 2)
-  stripePriceId  String?  @unique
-  features       Json     @default("[]")
-
-  subscriptions Subscription[]
-}
-
 model Subscription {
-  id                   String          @id @default(cuid())
-  profileId            String          @unique
-  // Legacy Stripe fields (mantenidos para compatibilidad)
-  planId               String?
-  stripeSubscriptionId String?         @unique
-  status               SubscriptionStatus2?
-  currentPeriodEnd     DateTime?
-  // Campos MercadoPago
-  plan                 String          @default("GRATIS")
-  estado               PlanEstado      @default(ACTIVA)
-  mpPaymentId          String?
-  mpPreferenceId       String?
-  fechaInicio          DateTime        @default(now())
-  fechaVencimiento     DateTime?
-  createdAt            DateTime        @default(now())
-  updatedAt            DateTime        @updatedAt
+  id               String     @id @default(cuid())
+  profileId        String     @unique
+  plan             String     @default("GRATIS")
+  estado           PlanEstado @default(ACTIVA)
+  mpPaymentId      String?
+  mpPreferenceId   String?
+  fechaInicio      DateTime   @default(now())
+  fechaVencimiento DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
-  profile         Profile           @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  subscriptionPlan SubscriptionPlan? @relation(fields: [planId], references: [id])
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 }
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
@@ -462,13 +579,6 @@ enum SubscriptionStatus {
   FREE
   BASIC
   PREMIUM
-}
-
-enum SubscriptionStatus2 {
-  ACTIVE
-  CANCELED
-  PAST_DUE
-  TRIALING
 }
 
 enum PlanEstado {
@@ -523,4 +633,24 @@ enum AppointmentStatus {
   CONFIRMADO
   CANCELADO
   COMPLETADO
+}
+
+enum CategoriaEjercicio {
+  PECHO
+  ESPALDA
+  PIERNAS
+  HOMBROS
+  BRAZOS
+  ABDOMEN
+  CARDIO
+  CUERPO_COMPLETO
+}
+
+enum ObjetivoPlan {
+  DEFICIT_CALORICO
+  GANANCIA_MUSCULAR
+  MANTENIMIENTO
+  VEGETARIANO
+  SIN_TACC
+  PERSONALIZADO
 }

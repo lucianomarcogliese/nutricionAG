@@ -23,7 +23,8 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
     console.log('body recibido:', JSON.stringify(body))
-    const { fullName, age, weightKg, heightCm, sex, goal, activityLevel, dietaryRestrictions } = body
+    const { fullName, age, weightKg, heightCm, sex, goal, activityLevel, dietaryRestrictions,
+            tipoActividad, suplementosMedicacion, alergias } = body
 
     if (!fullName || !age || !weightKg || !heightCm || !sex || !goal || !activityLevel) {
       return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 })
@@ -57,6 +58,9 @@ export async function POST(req: NextRequest) {
         goal,
         activityLevel,
         dietaryRestrictions,
+        tipoActividad: tipoActividad ?? null,
+        suplementosMedicacion: suplementosMedicacion ?? null,
+        alergias: Array.isArray(alergias) ? alergias : [],
         onboardingCompleted: true,
       },
       update: {
@@ -68,6 +72,9 @@ export async function POST(req: NextRequest) {
         goal,
         activityLevel,
         dietaryRestrictions,
+        tipoActividad: tipoActividad ?? null,
+        suplementosMedicacion: suplementosMedicacion ?? null,
+        alergias: Array.isArray(alergias) ? alergias : [],
         onboardingCompleted: true,
       },
     })
@@ -88,7 +95,8 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { fullName, age, weightKg, heightCm, sex, goal, activityLevel, dietaryRestrictions } = body
+    const { fullName, age, weightKg, heightCm, sex, goal, activityLevel, dietaryRestrictions,
+            tipoActividad, suplementosMedicacion, alergias } = body
 
     if (!fullName || !age || !weightKg || !heightCm || !sex || !goal || !activityLevel) {
       return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
@@ -121,6 +129,9 @@ export async function PATCH(req: NextRequest) {
         goal,
         activityLevel,
         dietaryRestrictions,
+        tipoActividad: tipoActividad ?? null,
+        suplementosMedicacion: suplementosMedicacion ?? null,
+        alergias: Array.isArray(alergias) ? alergias : [],
       },
     })
 

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { getPermisos } from "@/lib/permisos"
+import { nutricionPlanSchema } from "@/lib/schemas/nutricionPlanSchema"
 
 async function getProfileId(userId: string) {
   const profile = await prisma.profile.findUnique({
@@ -48,6 +49,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const role = (session.user as { role?: string }).role
+    if (role !== "NUTRICIONISTA" && role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
     const profileId = await getProfileId(session.user.id)
     if (!profileId) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 })
@@ -65,22 +71,14 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const name = typeof body.name === "string" ? body.name.trim() : ""
-    const rawCalories = body.caloriesTarget
-    const caloriesTarget =
-      rawCalories !== undefined && rawCalories !== "" && rawCalories !== null
-        ? parseInt(String(rawCalories), 10)
-        : null
-
-    if (!name) {
-      return NextResponse.json({ error: "El nombre es requerido" }, { status: 400 })
+    const result = nutricionPlanSchema.safeParse(body)
+    if (!result.success) {
+      return NextResponse.json(
+        { error: "Datos inválidos", details: result.error.flatten().fieldErrors },
+        { status: 400 }
+      )
     }
-    if (name.length > 100) {
-      return NextResponse.json({ error: "El nombre no puede superar los 100 caracteres" }, { status: 400 })
-    }
-    if (caloriesTarget !== null && (isNaN(caloriesTarget) || caloriesTarget < 0 || caloriesTarget > 10000)) {
-      return NextResponse.json({ error: "Objetivo calórico inválido (0–10000)" }, { status: 400 })
-    }
+    const { name, caloriesTarget = null } = result.data
 
     await prisma.nutritionPlan.updateMany({
       where: { profileId, isActive: true },

@@ -9,36 +9,11 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions["adapter"],
   session: { strategy: "jwt" },
   pages: { signIn: "/auth/login" },
-  cookies: {
-    sessionToken: {
-      name: `__Secure-next-auth.session-token`,
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: true },
-    },
-    callbackUrl: {
-      name: `__Secure-next-auth.callback-url`,
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: true },
-    },
-    csrfToken: {
-      name: `__Host-next-auth.csrf-token`,
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: true },
-    },
-    pkceCodeVerifier: {
-      name: `__Secure-next-auth.pkce.code_verifier`,
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: true, maxAge: 900 },
-    },
-    state: {
-      name: `__Secure-next-auth.state`,
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: true, maxAge: 900 },
-    },
-    nonce: {
-      name: `__Secure-next-auth.nonce`,
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: true },
-    },
-  },
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
     }),
     CredentialsProvider({
       name: "credentials",
@@ -75,7 +50,7 @@ export const authOptions: NextAuthOptions = {
           const [profile, dbUser] = await Promise.all([
             prisma.profile.findUnique({
               where: { userId: user.id },
-              select: { id: true, subscriptionStatus: true, onboardingCompleted: true },
+              select: { id: true, onboardingCompleted: true },
             }),
             prisma.user.findUnique({
               where: { id: user.id },
@@ -83,7 +58,6 @@ export const authOptions: NextAuthOptions = {
             }),
           ])
           token.profileId = profile?.id ?? ""
-          token.subscriptionStatus = profile?.subscriptionStatus ?? "FREE"
           token.onboardingCompleted = profile?.onboardingCompleted ?? false
           token.role = dbUser?.role ?? "USER"
           token.nutricionistaId = dbUser?.nutricionistaId ?? undefined
@@ -95,7 +69,7 @@ export const authOptions: NextAuthOptions = {
           const [profile, dbUser] = await Promise.all([
             prisma.profile.findUnique({
               where: { userId: token.id as string },
-              select: { id: true, subscriptionStatus: true, onboardingCompleted: true },
+              select: { id: true, onboardingCompleted: true },
             }),
             prisma.user.findUnique({
               where: { id: token.id as string },
@@ -104,7 +78,6 @@ export const authOptions: NextAuthOptions = {
           ])
           if (profile) {
             token.profileId = profile.id
-            token.subscriptionStatus = profile.subscriptionStatus
             token.onboardingCompleted = profile.onboardingCompleted
           }
           if (dbUser) {
@@ -141,7 +114,6 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id
         session.user.role = token.role
         session.user.profileId = token.profileId
-        session.user.subscriptionStatus = token.subscriptionStatus
         session.user.onboardingCompleted = token.onboardingCompleted
         session.user.nutricionistaId = token.nutricionistaId
       }

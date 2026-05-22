@@ -1,16 +1,31 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 
+const OAUTH_ERRORS: Record<string, string> = {
+  OAuthAccountNotLinked: "Este email ya está registrado con contraseña. Ingresá con email y contraseña.",
+  OAuthSignin: "Error al iniciar sesión con Google. Intentá de nuevo.",
+  OAuthCallback: "Error al procesar la respuesta de Google. Intentá de nuevo.",
+  Callback: "Error de autenticación. Intentá de nuevo.",
+  Default: "Ocurrió un error al iniciar sesión.",
+}
+
 export default function LoginPage() {
-  const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const oauthError = searchParams.get("error")
+    if (oauthError) {
+      setError(OAUTH_ERRORS[oauthError] ?? OAUTH_ERRORS.Default)
+    }
+  }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -28,8 +43,8 @@ export default function LoginPage() {
     if (result?.error) {
       setError("Email o contraseña incorrectos.")
     } else {
-      // El proxy lee el JWT y redirige a /admin si es rol especial
-      router.replace("/dashboard")
+      // Full page navigation para que el proxy intercepte y redirija correctamente
+      window.location.replace("/dashboard")
     }
   }
 

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { MercadoPagoConfig, Payment } from "mercadopago"
 import crypto from "crypto"
+import { sendEmail } from "@/lib/email"
+import { confirmacionPagoHtml, confirmacionPagoSubject } from "@/emails/confirmacionPago"
 
 const mpClient = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -38,6 +40,10 @@ function verifyMPSignature(req: NextRequest, paymentId: string): boolean {
   }
 }
 
+// TODO(deploy): configurar este endpoint en el panel de MercadoPago:
+//   Developers → Tu app → Webhooks → URL de producción:
+//   https://<tu-dominio>/api/suscripcion/webhook
+//   Eventos a suscribir: payment
 // MercadoPago reintenta si no recibe 200 — siempre retornar 200
 export async function POST(req: NextRequest) {
   try {
@@ -107,6 +113,29 @@ export async function POST(req: NextRequest) {
         fechaVencimiento,
       },
     })
+
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true, email: true },
+      })
+      if (user?.email) {
+        const dd = String(fechaVencimiento.getDate()).padStart(2, "0")
+        const mm = String(fechaVencimiento.getMonth() + 1).padStart(2, "0")
+        const yyyy = fechaVencimiento.getFullYear()
+        await sendEmail(
+          user.email,
+          confirmacionPagoSubject,
+          confirmacionPagoHtml({
+            nombre: user.name ?? "Usuario",
+            plan: planNombre,
+            fechaVencimiento: `${dd}/${mm}/${yyyy}`,
+          })
+        )
+      }
+    } catch (emailError) {
+      console.error("Webhook MP: error enviando email de confirmación:", emailError instanceof Error ? emailError.message : emailError)
+    }
 
     return NextResponse.json({ ok: true })
   } catch (error) {

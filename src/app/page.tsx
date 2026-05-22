@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { getLandingContent } from "@/lib/landing-seed"
 import { prisma } from "@/lib/prisma"
 
@@ -149,21 +150,25 @@ export default async function LandingPage() {
                 <div key={t.id} className="bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
                   {/* Fotos */}
                   <div className="grid grid-cols-2">
-                    <div className="relative">
-                      <img
+                    <div className="relative aspect-[4/5]">
+                      <Image
+                        fill
                         src={t.antesUrl}
                         alt={`${t.nombre} antes`}
-                        className="w-full aspect-[4/5] object-cover"
+                        className="object-cover"
+                        sizes="(max-width: 768px) 50vw, 25vw"
                       />
                       <span className="absolute top-3 left-3 bg-black/60 text-white text-xs font-semibold px-2.5 py-1 rounded-full">
                         Antes
                       </span>
                     </div>
-                    <div className="relative">
-                      <img
+                    <div className="relative aspect-[4/5]">
+                      <Image
+                        fill
                         src={t.despuesUrl}
                         alt={`${t.nombre} después`}
-                        className="w-full aspect-[4/5] object-cover"
+                        className="object-cover"
+                        sizes="(max-width: 768px) 50vw, 25vw"
                       />
                       <span className="absolute top-3 left-3 bg-emerald-600 text-white text-xs font-semibold px-2.5 py-1 rounded-full">
                         Después

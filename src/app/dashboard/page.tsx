@@ -95,18 +95,30 @@ async function UltimoRegistroPeso({ profileId }: { profileId: string }) {
 }
 
 async function ProximoTurno({ userId }: { userId: string }) {
-  const now = new Date()
-  const turno = await prisma.appointment.findFirst({
-    where: {
-      userId,
-      fecha: { gte: now },
-      estado: { not: 'CANCELADO' },
-    },
-    include: {
-      nutricionista: { select: { nombre: true, color: true, matricula: true } },
-    },
-    orderBy: { fecha: 'asc' },
-  })
+  let turno = null
+  try {
+    const now = new Date()
+    turno = await prisma.appointment.findFirst({
+      where: {
+        userId,
+        fecha: { gte: now },
+        estado: { not: 'CANCELADO' },
+      },
+      include: {
+        nutricionista: { select: { nombre: true, color: true, matricula: true } },
+      },
+      orderBy: { fecha: 'asc' },
+    })
+  } catch {
+    return (
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold text-gray-900">Próximo turno</h2>
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 text-center">
+          <p className="text-gray-400 text-sm">No disponible en este momento.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="mt-8">
