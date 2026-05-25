@@ -1,6 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import {
+  Sunrise, Sun, Moon, Zap, Flame, Utensils, Apple,
+  Leaf, MessageCircle, Info, CheckCircle2, Pill, ChevronDown
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 type ObjetivoPlan = 'DEFICIT_CALORICO' | 'GANANCIA_MUSCULAR' | 'MANTENIMIENTO' | 'VEGETARIANO' | 'SIN_TACC' | 'PERSONALIZADO'
 
@@ -31,15 +36,15 @@ interface PlanNutricional {
   comidas: PlanComida[]
 }
 
-function getMealIcon(nombre: string): string {
+function getMealIcon(nombre: string): LucideIcon {
   const n = nombre.toLowerCase()
-  if (n.includes('desayuno')) return '🌅'
-  if (n.includes('colación') || n.includes('colacion') || n.includes('merienda') || n.includes('snack')) return '🍎'
-  if (n.includes('almuerzo')) return '☀️'
-  if (n.includes('cena')) return '🌙'
-  if (n.includes('post')) return '💪'
-  if (n.includes('pre')) return '⚡'
-  return '🍽️'
+  if (n.includes('desayuno')) return Sunrise
+  if (n.includes('colación') || n.includes('colacion') || n.includes('merienda') || n.includes('snack')) return Apple
+  if (n.includes('almuerzo')) return Sun
+  if (n.includes('cena')) return Moon
+  if (n.includes('post')) return Zap
+  if (n.includes('pre')) return Flame
+  return Utensils
 }
 
 type GrupoTheme = { card: string; label: string }
@@ -88,8 +93,8 @@ export function NutricionView() {
   if (!plan) {
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-8 py-16 text-center">
-        <div className="text-6xl mb-4">🥗</div>
-        <h1 className="text-xl font-bold text-gray-800 mb-1">Sin plan asignado</h1>
+        <Leaf className="w-10 h-10 text-gray-300 mx-auto mb-4" />
+        <h1 className="text-base font-semibold text-gray-800 mb-1">Sin plan asignado</h1>
         <p className="text-sm text-gray-500">Tu nutricionista aún no asignó un plan. Podés consultarle por mensajes.</p>
       </div>
     )
@@ -105,7 +110,7 @@ export function NutricionView() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tu plan nutricional</p>
+            <p className="text-xs font-medium text-gray-500 mb-1">Tu plan nutricional</p>
             <h1 className="text-xl font-bold text-gray-900 leading-snug truncate">{plan.nombre}</h1>
           </div>
           <span className={`text-xs font-semibold rounded-full px-3 py-1.5 shrink-0 mt-0.5 ${OBJETIVO_BADGE[plan.objetivo]}`}>
@@ -115,9 +120,9 @@ export function NutricionView() {
 
         {plan.notaNutricionista && (
           <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 flex gap-3 items-start">
-            <span className="text-base shrink-0 mt-0.5">💬</span>
+            <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
             <div>
-              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-0.5">Nota de tu nutricionista</p>
+              <p className="text-xs font-medium text-emerald-600 mb-0.5">Nota de tu nutricionista</p>
               <p className="text-sm text-emerald-900 leading-relaxed">{plan.notaNutricionista}</p>
             </div>
           </div>
@@ -127,7 +132,7 @@ export function NutricionView() {
       {/* ── Comidas ── */}
       {plan.comidas.map((comida) => {
         const isOpen = !!expandedComidas[comida.id]
-        const icon = getMealIcon(comida.nombre)
+        const MealIcon = getMealIcon(comida.nombre)
         const gruposConOpciones = comida.grupos.filter((g) => g.opciones.length > 0)
 
         return (
@@ -136,14 +141,11 @@ export function NutricionView() {
               className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-gray-50/70 transition-colors"
               onClick={() => toggleComida(comida.id)}
             >
-              <span className="text-xl shrink-0 w-8 text-center leading-none">{icon}</span>
+              <MealIcon className="w-4 h-4 text-gray-400 shrink-0" />
               <span className="font-semibold text-gray-900 flex-1 text-sm">{comida.nombre}</span>
-              <svg
+              <ChevronDown
                 className={`w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
+              />
             </button>
 
             {isOpen && (
@@ -152,8 +154,8 @@ export function NutricionView() {
                 {/* Nota de la comida */}
                 {comida.nota && (
                   <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                    <span className="text-sm">⚡</span>
-                    <p className="text-xs font-semibold text-amber-800 tracking-wide">{comida.nota}</p>
+                    <Info className="w-4 h-4 text-amber-600 shrink-0" />
+                    <p className="text-xs font-medium text-amber-800 tracking-wide">{comida.nota}</p>
                   </div>
                 )}
 
@@ -164,7 +166,7 @@ export function NutricionView() {
                       const theme = getGrupoTheme(grupo.nombre)
                       return (
                         <div key={grupo.id} className={`rounded-xl p-4 ${theme.card}`}>
-                          <span className={`inline-block text-[10px] font-bold uppercase tracking-widest rounded-full px-2.5 py-0.5 mb-3 ${theme.label}`}>
+                          <span className={`inline-block text-[11px] font-medium rounded-full px-2.5 py-0.5 mb-3 ${theme.label}`}>
                             {grupo.nombre}
                           </span>
                           <div>
@@ -190,9 +192,9 @@ export function NutricionView() {
                 {/* Ideas de menú */}
                 {comida.ideasMenu && (
                   <div className="flex gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
-                    <span className="text-base shrink-0 mt-0.5">🍽️</span>
+                    <Utensils className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Ideas de menú</p>
+                      <p className="text-xs font-medium text-gray-500 mb-1">Ideas de menú</p>
                       <p className="text-sm text-gray-600 italic whitespace-pre-wrap leading-relaxed">{comida.ideasMenu}</p>
                     </div>
                   </div>
@@ -207,9 +209,9 @@ export function NutricionView() {
       {/* ── Recomendaciones ── */}
       {plan.recomendaciones && (
         <div className="flex gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-4">
-          <span className="text-base shrink-0 mt-0.5">✅</span>
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
           <div>
-            <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-2">Recomendaciones</p>
+            <p className="text-xs font-medium text-emerald-700 mb-2">Recomendaciones</p>
             <p className="text-sm text-emerald-900 whitespace-pre-wrap leading-relaxed">{plan.recomendaciones}</p>
           </div>
         </div>
@@ -218,9 +220,9 @@ export function NutricionView() {
       {/* ── Suplementos ── */}
       {plan.suplementos && (
         <div className="flex gap-3 bg-white border border-gray-100 shadow-sm rounded-2xl px-5 py-4">
-          <span className="text-base shrink-0 mt-0.5">💊</span>
+          <Pill className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
           <div>
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Suplementos</p>
+            <p className="text-xs font-medium text-gray-500 mb-2">Suplementos</p>
             <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{plan.suplementos}</p>
           </div>
         </div>

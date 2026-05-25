@@ -2,6 +2,11 @@
 
 import { useState } from 'react'
 import { signOut } from 'next-auth/react'
+import {
+  BarChart3, Users, Calendar, Mail, Image, ChefHat,
+  Tag, Dumbbell, Salad, Stethoscope, Ruler, Settings, Globe
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { StatsTab } from './tabs/StatsTab'
 import { UsersTab } from './tabs/UsersTab'
 import { CalendarTab } from './tabs/CalendarTab'
@@ -18,20 +23,20 @@ import { TemplatesNutricionalesTab } from './tabs/TemplatesNutricionalesTab'
 
 type Tab = 'stats' | 'users' | 'calendar' | 'testimonios' | 'recetas' | 'descuentos' | 'planes' | 'mensajes' | 'nutricionistas' | 'antropometria' | 'landing' | 'ejercicios' | 'templates-nutricionales'
 
-const ALL_NAV: { key: Tab; icon: string; label: string; roles: string[] }[] = [
-  { key: 'stats',           icon: '📊', label: 'Estadísticas',   roles: ['ADMIN'] },
-  { key: 'users',           icon: '👥', label: 'Usuarios',       roles: ['ADMIN'] },
-  { key: 'calendar',        icon: '📅', label: 'Calendario',     roles: ['ADMIN', 'NUTRICIONISTA', 'RECEPCIONISTA'] },
-  { key: 'mensajes',        icon: '✉️', label: 'Mensajes',       roles: ['ADMIN', 'NUTRICIONISTA'] },
-  { key: 'testimonios',     icon: '📸', label: 'Testimonios',    roles: ['ADMIN'] },
-  { key: 'recetas',         icon: '🍳', label: 'Recetas',        roles: ['ADMIN'] },
-  { key: 'descuentos',      icon: '🏷️', label: 'Descuentos',    roles: ['ADMIN'] },
-  { key: 'ejercicios',      icon: '🏋️', label: 'Ejercicios',    roles: ['ADMIN'] },
-  { key: 'templates-nutricionales', icon: '🥗', label: 'Templates Nutri', roles: ['ADMIN', 'NUTRICIONISTA'] },
-  { key: 'nutricionistas',  icon: '👨‍⚕️', label: 'Nutricionistas', roles: ['ADMIN'] },
-  { key: 'antropometria',   icon: '📏', label: 'Antropometría',  roles: ['ADMIN', 'NUTRICIONISTA'] },
-  { key: 'planes',          icon: '⚙️', label: 'Planes',         roles: ['ADMIN'] },
-  { key: 'landing',         icon: '🌐', label: 'Landing',        roles: ['ADMIN'] },
+const ALL_NAV: { key: Tab; icon: LucideIcon; label: string; roles: string[] }[] = [
+  { key: 'stats',                    icon: BarChart3,     label: 'Estadísticas',     roles: ['ADMIN'] },
+  { key: 'users',                    icon: Users,         label: 'Usuarios',         roles: ['ADMIN'] },
+  { key: 'calendar',                 icon: Calendar,      label: 'Calendario',       roles: ['ADMIN', 'NUTRICIONISTA', 'RECEPCIONISTA'] },
+  { key: 'mensajes',                 icon: Mail,          label: 'Mensajes',         roles: ['ADMIN', 'NUTRICIONISTA'] },
+  { key: 'testimonios',              icon: Image,         label: 'Testimonios',      roles: ['ADMIN'] },
+  { key: 'recetas',                  icon: ChefHat,       label: 'Recetas',          roles: ['ADMIN'] },
+  { key: 'descuentos',               icon: Tag,           label: 'Descuentos',       roles: ['ADMIN'] },
+  { key: 'ejercicios',               icon: Dumbbell,      label: 'Ejercicios',       roles: ['ADMIN'] },
+  { key: 'templates-nutricionales',  icon: Salad,         label: 'Templates Nutri',  roles: ['ADMIN', 'NUTRICIONISTA'] },
+  { key: 'nutricionistas',           icon: Stethoscope,   label: 'Nutricionistas',   roles: ['ADMIN'] },
+  { key: 'antropometria',            icon: Ruler,         label: 'Antropometría',    roles: ['ADMIN', 'NUTRICIONISTA'] },
+  { key: 'planes',                   icon: Settings,      label: 'Planes',           roles: ['ADMIN'] },
+  { key: 'landing',                  icon: Globe,         label: 'Landing',          roles: ['ADMIN'] },
 ]
 
 export function AdminDashboard({
@@ -73,37 +78,43 @@ export function AdminDashboard({
         {/* Sidebar desktop */}
         <aside className="hidden lg:flex flex-col w-52 bg-white border-r border-gray-200 py-4 px-3 shrink-0">
           <nav className="space-y-1">
-            {nav.map((item) => (
-              <button
-                key={item.key}
-                onClick={() => setActive(item.key)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${
-                  active === item.key
-                    ? 'bg-emerald-50 text-emerald-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <span className="text-base leading-none">{item.icon}</span>
-                {item.label}
-              </button>
-            ))}
+            {nav.map((item) => {
+              const Icon = item.icon
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => setActive(item.key)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${
+                    active === item.key
+                      ? 'bg-emerald-50 text-emerald-700'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
+                >
+                  <Icon className="w-4 h-4 shrink-0" />
+                  {item.label}
+                </button>
+              )
+            })}
           </nav>
         </aside>
 
         {/* Mobile tab bar */}
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 flex overflow-x-auto">
-          {nav.map((item) => (
-            <button
-              key={item.key}
-              onClick={() => setActive(item.key)}
-              className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 text-xs font-medium transition-colors min-w-[4rem] ${
-                active === item.key ? 'text-emerald-600' : 'text-gray-500'
-              }`}
-            >
-              <span className="text-lg leading-none">{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
+          {nav.map((item) => {
+            const Icon = item.icon
+            return (
+              <button
+                key={item.key}
+                onClick={() => setActive(item.key)}
+                className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 text-xs font-medium transition-colors min-w-[4rem] ${
+                  active === item.key ? 'text-emerald-600' : 'text-gray-500'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                {item.label}
+              </button>
+            )
+          })}
         </div>
 
         {/* Content */}

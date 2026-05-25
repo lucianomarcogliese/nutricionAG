@@ -2,19 +2,19 @@ import { LogoutButton } from '@/components/dashboard/LogoutButton'
 import { SidebarNavLinks, BottomNav } from '@/components/dashboard/SidebarNav'
 
 const NAV_ITEMS = [
-  { href: '/dashboard',                label: 'Dashboard',       labelShort: 'Inicio',    icon: '🏠' },
-  { href: '/dashboard/perfil',         label: 'Mi perfil',       labelShort: 'Perfil',    icon: '👤' },
-  { href: '/dashboard/nutricion',      label: 'Nutrición',       labelShort: 'Nutrición', icon: '🥗' },
-  { href: '/dashboard/entrenamientos', label: 'Entrenamientos',  labelShort: 'Entreno',   icon: '🏋️' },
-  { href: '/dashboard/turnos',         label: 'Mis turnos',      labelShort: 'Turnos',    icon: '📅' },
-  { href: '/dashboard/antropometria',  label: 'Antropometría',   labelShort: 'Mediciones',icon: '📏' },
-  { href: '/dashboard/peso',           label: 'Seguimiento',     labelShort: 'Peso',      icon: '⚖️' },
-  { href: '/dashboard/recetas',        label: 'Recetas',         labelShort: 'Recetas',   icon: '🍳' },
-  { href: '/dashboard/descuentos',     label: 'Descuentos',      labelShort: 'Descuentos',icon: '🏷️' },
-  { href: '/dashboard/chat',           label: 'Chat',            labelShort: 'Chat',      icon: '💬' },
-  { href: '/dashboard/mensajes',       label: 'Mensajes',        labelShort: 'Mensajes',  icon: '✉️' },
-  { href: '/planes',                   label: 'Planes',          labelShort: 'Planes',    icon: '💎' },
-  { href: '/dashboard/configuracion',  label: 'Configuración',   labelShort: 'Config',    icon: '⚙️' },
+  { href: '/dashboard',                label: 'Dashboard',       labelShort: 'Inicio',    icon: 'Home' },
+  { href: '/dashboard/perfil',         label: 'Mi perfil',       labelShort: 'Perfil',    icon: 'User' },
+  { href: '/dashboard/nutricion',      label: 'Nutrición',       labelShort: 'Nutrición', icon: 'Salad' },
+  { href: '/dashboard/entrenamientos', label: 'Entrenamientos',  labelShort: 'Entreno',   icon: 'Dumbbell' },
+  { href: '/dashboard/turnos',         label: 'Mis turnos',      labelShort: 'Turnos',    icon: 'Calendar' },
+  { href: '/dashboard/antropometria',  label: 'Antropometría',   labelShort: 'Mediciones',icon: 'Ruler' },
+  { href: '/dashboard/peso',           label: 'Seguimiento',     labelShort: 'Peso',      icon: 'Scale' },
+  { href: '/dashboard/recetas',        label: 'Recetas',         labelShort: 'Recetas',   icon: 'ChefHat' },
+  { href: '/dashboard/descuentos',     label: 'Descuentos',      labelShort: 'Descuentos',icon: 'Tag' },
+  { href: '/dashboard/chat',           label: 'Chat',            labelShort: 'Chat',      icon: 'MessageCircle' },
+  { href: '/dashboard/mensajes',       label: 'Mensajes',        labelShort: 'Mensajes',  icon: 'Mail' },
+  { href: '/planes',                   label: 'Planes',          labelShort: 'Planes',    icon: 'Gem' },
+  { href: '/dashboard/configuracion',  label: 'Configuración',   labelShort: 'Config',    icon: 'Settings' },
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

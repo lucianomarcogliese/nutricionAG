@@ -2,6 +2,9 @@ import Link from "next/link"
 import Image from "next/image"
 import { getLandingContent } from "@/lib/landing-seed"
 import { prisma } from "@/lib/prisma"
+import { Salad, BarChart2, Dumbbell, Calendar, Target, Users } from "lucide-react"
+
+const FEATURE_ICONS = [Salad, BarChart2, Dumbbell, Calendar, Target, Users]
 
 interface Testimonio {
   id: string
@@ -32,7 +35,7 @@ export default async function LandingPage() {
   return (
     <div className="min-h-screen bg-white font-sans">
       {/* Navbar */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 shadow-sm">
+      <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
           <span className="text-emerald-600 font-bold text-xl tracking-tight">Nutrición AG</span>
           <nav className="hidden md:flex items-center gap-8 text-sm text-gray-600 font-medium">
@@ -60,8 +63,7 @@ export default async function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-white via-emerald-50/40 to-white pt-20 pb-28">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-emerald-100/50 via-transparent to-transparent pointer-events-none" />
+      <section className="relative overflow-hidden bg-gradient-to-b from-emerald-50/30 to-white pt-20 pb-28">
         <div className="relative max-w-4xl mx-auto px-4 sm:px-8 text-center">
           <span className="inline-block bg-emerald-100 text-emerald-700 text-xs font-semibold tracking-wide uppercase px-3 py-1 rounded-full mb-6">
             Nutrición personalizada · IA · Profesionales
@@ -97,13 +99,18 @@ export default async function LandingPage() {
             <p className="text-gray-500 mt-3">Herramientas diseñadas para ayudarte a alcanzar tus objetivos</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {data.features.map((f, i) => (
-              <div key={i} className="bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:border-emerald-200 hover:shadow-sm transition-all">
-                <div className="text-4xl mb-4">{f.emoji}</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{f.titulo}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{f.descripcion}</p>
-              </div>
-            ))}
+            {data.features.map((f, i) => {
+              const Icon = FEATURE_ICONS[i % FEATURE_ICONS.length]
+              return (
+                <div key={i} className="bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:border-emerald-200 hover:shadow-sm transition-all">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center mb-4">
+                    <Icon className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{f.titulo}</h3>
+                  <p className="text-gray-500 text-sm leading-relaxed">{f.descripcion}</p>
+                </div>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -230,7 +237,7 @@ export default async function LandingPage() {
                 }`}
               >
                 {p.destacado && (
-                  <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-xs font-semibold px-4 py-1 rounded-full">
+                  <span className="absolute top-4 right-4 bg-emerald-100 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full">
                     Más elegido
                   </span>
                 )}

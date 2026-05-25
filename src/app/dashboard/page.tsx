@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { Prisma } from '@/generated/prisma/client'
 import { LogoutButton } from '@/components/dashboard/LogoutButton'
 import Link from 'next/link'
+import { Scale, Target, Activity, Salad, Calendar } from 'lucide-react'
 
 type WeightRow = { id: string; weightKg: number; fecha: Date }
 
@@ -59,7 +60,7 @@ async function UltimoRegistroPeso({ profileId }: { profileId: string }) {
     if (!entry) {
       return (
         <Link href="/dashboard/peso" className="block">
-          <div className="text-2xl mb-2">⚖️</div>
+          <Scale className="w-5 h-5 text-gray-400 mb-2" />
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Peso</p>
           <p className="text-sm text-emerald-600 mt-1 hover:underline">Registrar →</p>
         </Link>
@@ -70,12 +71,12 @@ async function UltimoRegistroPeso({ profileId }: { profileId: string }) {
 
     return (
       <Link href="/dashboard/peso" className="block">
-        <div className="text-2xl mb-2">⚖️</div>
+        <Scale className="w-5 h-5 text-gray-400 mb-2" />
         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Peso actual</p>
         <p className="text-lg font-bold text-gray-800 mt-1">
           {entry.weightKg} kg
           {diff !== null && (
-            <span className={`ml-2 text-xs font-normal ${diff < 0 ? "text-emerald-600" : diff > 0 ? "text-red-500" : "text-gray-400"}`}>
+            <span className={`ml-2 text-xs font-normal ${diff < 0 ? "text-emerald-600" : diff > 0 ? "text-amber-500" : "text-gray-400"}`}>
               {diff > 0 ? "+" : ""}{diff} kg
             </span>
           )}
@@ -86,7 +87,7 @@ async function UltimoRegistroPeso({ profileId }: { profileId: string }) {
   } catch {
     return (
       <Link href="/dashboard/peso" className="block">
-        <div className="text-2xl mb-2">⚖️</div>
+        <Scale className="w-5 h-5 text-gray-400 mb-2" />
         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Peso</p>
         <p className="text-sm text-emerald-600 mt-1 hover:underline">Registrar →</p>
       </Link>
@@ -157,7 +158,7 @@ async function ProximoTurno({ userId }: { userId: string }) {
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 text-center">
-          <div className="text-4xl mb-3">📅</div>
+          <Calendar className="w-8 h-8 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-500 text-sm">No tenés turnos próximos.</p>
           <p className="text-gray-400 text-xs mt-1">Tu nutricionista los coordinará con vos.</p>
         </div>
@@ -215,8 +216,8 @@ export default async function DashboardPage() {
 
       <main className="max-w-5xl mx-auto px-4 sm:px-8 py-8">
         {esGratis && (
-          <div className="mb-6 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3 flex items-center justify-between gap-4">
-            <p className="text-sm text-emerald-700">
+          <div className="mb-6 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 flex items-center justify-between gap-4">
+            <p className="text-sm text-gray-600">
               Estás usando el plan gratuito. Actualizá para acceder a planes ilimitados, IA y consultas profesionales.
             </p>
             <Link
@@ -229,7 +230,7 @@ export default async function DashboardPage() {
         )}
 
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Hola, {profile.fullName} 👋</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Hola, {profile.fullName}</h1>
           <p className="text-sm text-gray-500 mt-1">Tu resumen de hoy</p>
         </div>
 
@@ -239,7 +240,7 @@ export default async function DashboardPage() {
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-            <div className="text-2xl mb-2">🎯</div>
+            <Target className="w-5 h-5 text-gray-400 mb-2" />
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Objetivo</p>
             <p className="text-sm font-semibold text-gray-800 mt-1">
               {profile.goal ? GOAL_LABELS[profile.goal] ?? profile.goal : '—'}
@@ -247,7 +248,7 @@ export default async function DashboardPage() {
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-            <div className="text-2xl mb-2">🏃</div>
+            <Activity className="w-5 h-5 text-gray-400 mb-2" />
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Actividad</p>
             <p className="text-sm font-semibold text-gray-800 mt-1">
               {profile.activityLevel ? ACTIVITY_LABELS[profile.activityLevel] ?? profile.activityLevel : '—'}
@@ -255,7 +256,7 @@ export default async function DashboardPage() {
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-            <div className="text-2xl mb-2">🥗</div>
+            <Salad className="w-5 h-5 text-gray-400 mb-2" />
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Plan nutricional</p>
             <p className="text-sm text-gray-400 mt-1">Próximamente</p>
           </div>
