@@ -24,6 +24,8 @@ function LoginForm() {
     const oauthError = searchParams.get("error")
     if (oauthError) {
       setError(OAUTH_ERRORS[oauthError] ?? OAUTH_ERRORS.Default)
+      // Limpiar el param de la URL para que no persista al refrescar
+      window.history.replaceState({}, '', '/auth/login')
     }
   }, [searchParams])
 
