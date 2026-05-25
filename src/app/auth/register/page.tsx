@@ -54,7 +54,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 w-full max-w-md">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Crear cuenta</h1>
-        <p className="text-gray-600 mb-6 text-sm">Comenzá tu camino con Claude Nutri</p>
+        <p className="text-gray-600 mb-6 text-sm">Comenzá tu camino con Nutrición AG</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

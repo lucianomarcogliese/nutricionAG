@@ -6,7 +6,7 @@ import "./globals.css";
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 
 export const metadata: Metadata = {
-  title: "Claude Nutri",
+  title: "Nutrición AG",
   description: "Planes nutricionales y rutinas de entrenamiento personalizados",
 };
 

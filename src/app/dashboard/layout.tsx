@@ -22,7 +22,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-screen bg-gray-50">
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 bg-white border-r border-gray-200 p-4 shrink-0">
-        <span className="text-emerald-600 font-bold text-lg">Claude Nutri</span>
+        <span className="text-emerald-600 font-bold text-lg">Nutrición AG</span>
 
         <SidebarNavLinks items={NAV_ITEMS} />
 
