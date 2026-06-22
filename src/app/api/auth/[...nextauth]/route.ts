@@ -43,47 +43,6 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
-      // Solo aplica para Google OAuth
-      if (account?.provider !== 'google' || !user.email) return true
-
-      try {
-        // Si ya existe una Account de Google para este providerAccountId → flujo normal
-        const existingAccount = await prisma.account.findFirst({
-          where: { provider: 'google', providerAccountId: account.providerAccountId },
-        })
-        if (existingAccount) return true
-
-        // Si existe un usuario con el mismo email (cuenta con contraseña) → vincular manualmente
-        const existingUser = await prisma.user.findUnique({ where: { email: user.email } })
-        if (!existingUser) return true // Usuario nuevo, NextAuth lo crea normalmente
-
-        // Crear el Account de Google vinculado al usuario existente
-        await prisma.account.create({
-          data: {
-            userId: existingUser.id,
-            type: account.type,
-            provider: account.provider,
-            providerAccountId: account.providerAccountId,
-            access_token: account.access_token ?? null,
-            refresh_token: account.refresh_token ?? null,
-            expires_at: account.expires_at ?? null,
-            token_type: account.token_type ?? null,
-            scope: account.scope ?? null,
-            id_token: account.id_token ?? null,
-            session_state: account.session_state ?? null,
-          },
-        })
-
-        // Redirigir el flujo de NextAuth al usuario existente
-        user.id = existingUser.id
-        return true
-      } catch (err) {
-        console.error('[signIn Google] error vinculando cuenta:', err instanceof Error ? err.message : err)
-        return true // No bloquear el login por un error de linking
-      }
-    },
-
     async jwt({ token, user, trigger }) {
       try {
         if (user) {

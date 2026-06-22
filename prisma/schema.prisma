@@ -82,7 +82,7 @@ model Profile {
   dietaryRestrictions  String[]
   tipoActividad        String?
   suplementosMedicacion String?
-  alergias             String[]
+  noGusta              String?
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
 
@@ -463,30 +463,38 @@ model Antropometria {
   fecha           DateTime     @default(now())
 
   // Medidas básicas
-  pesoKg          Float
-  tallaCm         Float
+  pesoKg       Float
+  tallaCm      Float
+  tallaSentado Float?
+
+  // Diámetros (cm) — FIJO
+  diametroBiacromial           Float?
+  diametroToraxTransverso      Float?
+  diametroToraxAnteroposterior Float?
+  diametroBiiliocrestideo      Float?
+  diametroBiepicondileoHumeral Float?
+  diametroBiepicondileoFemoral Float?
+  diametroMunieca              Float?
 
   // Perímetros (cm)
-  cinturaCm       Float?
-  caderaCm        Float?
-  brazoCm         Float?
-  musloDerechoCm  Float?
-  pantorrillaDerechaCm Float?
+  perimetroCabeza   Float?   // FIJO
+  brazoRelajado     Float?
+  brazoFlexionado   Float?
+  perimetroAntebrazo Float?
+  toraxMesoesternal  Float?
+  cinturaMinima     Float?
+  caderaMaxima      Float?
+  musloSuperior     Float?
+  musloMedial       Float?
+  pantorrillaMaxima Float?
 
   // Pliegues cutáneos (mm) — Yuhasz + Heath-Carter
   pliegueSubescapular Float?
   pliegueTriceps      Float?
-  pliegueSuprailiaco  Float?
+  pliegueSupraespinal Float?
   pliegueAbdominal    Float?
-  pliegueMusloAnterior Float?
+  pliegueMusloMedial  Float?
   plieguePantorrilla  Float?
-  pliegueAxilarMedio  Float?
-  plieguePectoral     Float?
-
-  // Diámetros óseos (cm) — Martin
-  diametroBiepicondileoFemoral  Float?
-  diametroBiepicondileoHumeral  Float?
-  diametroMunieca               Float?
 
   // Resultados calculados
   imc              Float?

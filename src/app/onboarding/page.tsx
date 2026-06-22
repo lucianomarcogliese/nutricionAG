@@ -24,7 +24,7 @@ interface FormData {
   dietaryRestrictions: string[]
   tipoActividad: string
   suplementosMedicacion: string
-  alergias: string[]
+  noGusta: string
 }
 
 const INITIAL: FormData = {
@@ -38,7 +38,7 @@ const INITIAL: FormData = {
   dietaryRestrictions: [],
   tipoActividad: "",
   suplementosMedicacion: "",
-  alergias: [],
+  noGusta: "",
 }
 
 const GOALS: { value: Goal; label: string; description: string; icon: string }[] = [
@@ -66,12 +66,9 @@ const DIETARY_OPTIONS: { label: string; value: string }[] = [
   { label: "Kosher",          value: "KOSHER" },
 ]
 
-const ALERGIAS_OPTIONS = ["Gluten", "Lactosa", "Mariscos", "Frutos secos", "Huevo", "Soja"]
-
 export default function OnboardingPage() {
   const [step, setStep] = useState(1)
   const [data, setData] = useState<FormData>(INITIAL)
-  const [otraAlergia, setOtraAlergia] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const { update } = useSession()
@@ -90,15 +87,6 @@ export default function OnboardingPage() {
     }))
   }
 
-  function toggleAlergia(item: string) {
-    setData((prev) => ({
-      ...prev,
-      alergias: prev.alergias.includes(item)
-        ? prev.alergias.filter((a) => a !== item)
-        : [...prev.alergias, item],
-    }))
-  }
-
   function canAdvance() {
     if (step === 1) return data.fullName && data.age && data.weightKg && data.heightCm && data.sex
     if (step === 2) return !!data.goal
@@ -109,16 +97,11 @@ export default function OnboardingPage() {
     setLoading(true)
     setError("")
     try {
-      const alergiasFinal = [
-        ...data.alergias,
-        ...(otraAlergia.trim() ? [otraAlergia.trim()] : []),
-      ]
       const payload = {
         ...data,
         age: parseInt(data.age, 10),
         weightKg: parseFloat(data.weightKg),
         heightCm: parseFloat(data.heightCm),
-        alergias: alergiasFinal,
       }
       const res = await fetch("/api/profile", {
         method: "POST",
@@ -374,32 +357,16 @@ export default function OnboardingPage() {
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-700">
-                  Alergias / intolerancias{" "}
+                <label className="text-sm font-medium text-gray-700">
+                  ¿Qué no te gusta o no querés ver en tu plan?{" "}
                   <span className="font-normal text-gray-400">(opcional)</span>
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {ALERGIAS_OPTIONS.map((opcion) => (
-                    <button
-                      key={opcion}
-                      type="button"
-                      onClick={() => toggleAlergia(opcion)}
-                      className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-150 ${
-                        data.alergias.includes(opcion)
-                          ? "border-emerald-500 bg-emerald-500 text-white"
-                          : "border-gray-200 text-gray-600 hover:border-gray-300"
-                      }`}
-                    >
-                      {opcion}
-                    </button>
-                  ))}
-                </div>
-                <input
-                  type="text"
-                  value={otraAlergia}
-                  onChange={(e) => setOtraAlergia(e.target.value)}
-                  placeholder="Otra (escribí libremente)"
-                  className="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-sm"
+                </label>
+                <textarea
+                  value={data.noGusta}
+                  onChange={(e) => set("noGusta", e.target.value)}
+                  placeholder="Ej: no me gusta el brócoli, no quiero atún, evito el picante..."
+                  rows={3}
+                  className="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-sm resize-none"
                 />
               </div>
 

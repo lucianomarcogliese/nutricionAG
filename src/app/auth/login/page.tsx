@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
-import { signIn } from "next-auth/react"
+import { signIn, signOut } from "next-auth/react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 
@@ -108,7 +108,12 @@ function LoginForm() {
         </div>
 
         <button
-          onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+          onClick={async () => {
+            // Limpiar cualquier sesión activa antes de iniciar Google OAuth
+            // Evita el error "AccountNotLinkedError" cuando hay una sesión de otra cuenta abierta
+            await signOut({ redirect: false })
+            signIn("google", { callbackUrl: "/dashboard" })
+          }}
           className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-lg px-4 py-2 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">

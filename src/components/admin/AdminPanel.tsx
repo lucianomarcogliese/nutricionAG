@@ -1,7 +1,18 @@
 'use client'
 
 import { useState } from 'react'
+import { Salad, BarChart2, Dumbbell, Calendar, Target, Users } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import type { LandingData, Feature, TeamMember, Plan } from '@/lib/landing-seed'
+
+const AVAILABLE_ICONS: { name: string; Icon: LucideIcon }[] = [
+  { name: 'Salad',    Icon: Salad },
+  { name: 'Dumbbell', Icon: Dumbbell },
+  { name: 'BarChart2',Icon: BarChart2 },
+  { name: 'Calendar', Icon: Calendar },
+  { name: 'Target',   Icon: Target },
+  { name: 'Users',    Icon: Users },
+]
 
 type Tab = 'hero' | 'features' | 'equipo' | 'planes'
 
@@ -116,25 +127,34 @@ export function AdminPanel({ initialData }: { initialData: LandingData }) {
                     Eliminar
                   </button>
                 </div>
-                <div className="grid grid-cols-4 gap-3">
-                  <div>
-                    <label className={labelCls}>Emoji</label>
-                    <input
-                      type="text"
-                      value={f.emoji}
-                      onChange={(e) => setFeatures(features.map((x, j) => j === i ? { ...x, emoji: e.target.value } : x))}
-                      className={inputCls}
-                    />
+                <div>
+                  <label className={labelCls}>Ícono</label>
+                  <div className="flex gap-2 flex-wrap mt-1">
+                    {AVAILABLE_ICONS.map(({ name, Icon }) => (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => setFeatures(features.map((x, j) => j === i ? { ...x, emoji: name } : x))}
+                        title={name}
+                        className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors border ${
+                          f.emoji === name
+                            ? 'bg-emerald-100 border-emerald-400 text-emerald-600'
+                            : 'bg-white border-gray-200 text-gray-400 hover:border-emerald-300 hover:text-emerald-500'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                      </button>
+                    ))}
                   </div>
-                  <div className="col-span-3">
-                    <label className={labelCls}>Título</label>
-                    <input
-                      type="text"
-                      value={f.titulo}
-                      onChange={(e) => setFeatures(features.map((x, j) => j === i ? { ...x, titulo: e.target.value } : x))}
-                      className={inputCls}
-                    />
-                  </div>
+                </div>
+                <div>
+                  <label className={labelCls}>Título</label>
+                  <input
+                    type="text"
+                    value={f.titulo}
+                    onChange={(e) => setFeatures(features.map((x, j) => j === i ? { ...x, titulo: e.target.value } : x))}
+                    className={inputCls}
+                  />
                 </div>
                 <div>
                   <label className={labelCls}>Descripción</label>
@@ -148,7 +168,7 @@ export function AdminPanel({ initialData }: { initialData: LandingData }) {
               </div>
             ))}
             <button
-              onClick={() => setFeatures([...features, { emoji: '✨', titulo: '', descripcion: '' }])}
+              onClick={() => setFeatures([...features, { emoji: 'Salad', titulo: '', descripcion: '' }])}
               className="w-full border border-dashed border-gray-300 hover:border-emerald-400 hover:text-emerald-600 text-gray-400 rounded-xl px-4 py-3 text-sm transition-colors"
             >
               + Agregar feature

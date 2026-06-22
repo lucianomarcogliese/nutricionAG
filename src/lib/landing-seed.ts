@@ -45,9 +45,9 @@ export const LANDING_DEFAULTS: LandingData = {
     subheadline: "Planes nutricionales y rutinas de entrenamiento diseñados por profesionales y potenciados por IA",
   },
   features: [
-    { emoji: "🥗", titulo: "Planes nutricionales personalizados", descripcion: "Generados con IA en base a tu perfil, objetivos y restricciones alimentarias" },
-    { emoji: "💪", titulo: "Rutinas de entrenamiento", descripcion: "Diseñadas por licenciados en educación física adaptadas a tu nivel" },
-    { emoji: "📊", titulo: "Seguimiento de progreso", descripcion: "Controlá tus calorías, macros y evolución semana a semana" },
+    { emoji: "Salad",    titulo: "Planes nutricionales personalizados", descripcion: "Generados con IA en base a tu perfil, objetivos y restricciones alimentarias" },
+    { emoji: "Dumbbell", titulo: "Rutinas de entrenamiento",            descripcion: "Diseñadas por licenciados en educación física adaptadas a tu nivel" },
+    { emoji: "BarChart2",titulo: "Seguimiento de progreso",             descripcion: "Controlá tus calorías, macros y evolución semana a semana" },
   ],
   equipo: [
     { nombre: "Agustín Goñi", matricula: "MN11428", rol: "Fundador", especialidades: ["Nutrición deportiva", "Nutrición clínica", "Antropometría"] },

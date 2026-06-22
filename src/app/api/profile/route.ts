@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     console.log('body recibido:', JSON.stringify(body))
     const { fullName, age, weightKg, heightCm, sex, goal, activityLevel, dietaryRestrictions,
-            tipoActividad, suplementosMedicacion, alergias } = body
+            tipoActividad, suplementosMedicacion, noGusta } = body
 
     if (!fullName || !age || !weightKg || !heightCm || !sex || !goal || !activityLevel) {
       return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 })
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         dietaryRestrictions,
         tipoActividad: tipoActividad ?? null,
         suplementosMedicacion: suplementosMedicacion ?? null,
-        alergias: Array.isArray(alergias) ? alergias : [],
+        noGusta: noGusta ?? null,
         onboardingCompleted: true,
       },
       update: {
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         dietaryRestrictions,
         tipoActividad: tipoActividad ?? null,
         suplementosMedicacion: suplementosMedicacion ?? null,
-        alergias: Array.isArray(alergias) ? alergias : [],
+        noGusta: noGusta ?? null,
         onboardingCompleted: true,
       },
     })
@@ -96,7 +96,7 @@ export async function PATCH(req: NextRequest) {
 
     const body = await req.json()
     const { fullName, age, weightKg, heightCm, sex, goal, activityLevel, dietaryRestrictions,
-            tipoActividad, suplementosMedicacion, alergias } = body
+            tipoActividad, suplementosMedicacion, noGusta } = body
 
     if (!fullName || !age || !weightKg || !heightCm || !sex || !goal || !activityLevel) {
       return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
@@ -131,7 +131,7 @@ export async function PATCH(req: NextRequest) {
         dietaryRestrictions,
         tipoActividad: tipoActividad ?? null,
         suplementosMedicacion: suplementosMedicacion ?? null,
-        alergias: Array.isArray(alergias) ? alergias : [],
+        noGusta: noGusta ?? null,
       },
     })
 

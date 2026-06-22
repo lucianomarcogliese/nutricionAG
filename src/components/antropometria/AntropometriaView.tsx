@@ -1,34 +1,23 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 
 interface Antropometria {
   id: string
   fecha: string
   pesoKg: number
+  tallaCm: number
+  imc: number | null
+  brazoFlexionado: number | null
+  toraxMesoesternal: number | null
+  cinturaMinima: number | null
+  caderaMaxima: number | null
+  masaOseaKg: number | null
   masaGrasaKg: number | null
+  porcentajeGrasa: number | null
   masaMuscularKg: number | null
-  pliegueTriceps: number | null
-  pliegueSubescapular: number | null
-  pliegueSuprailiaco: number | null
-  pliegueAbdominal: number | null
-  pliegueMusloAnterior: number | null
-  plieguePantorrilla: number | null
   notas: string | null
   nutricionista: { id: string; nombre: string; color: string } | null
-}
-
-function suma6(a: Antropometria): number | null {
-  const vals = [
-    a.pliegueTriceps,
-    a.pliegueSubescapular,
-    a.pliegueSuprailiaco,
-    a.pliegueAbdominal,
-    a.pliegueMusloAnterior,
-    a.plieguePantorrilla,
-  ]
-  if (vals.some((v) => v === null)) return null
-  return Math.round((vals as number[]).reduce((s, v) => s + v, 0) * 10) / 10
 }
 
 type DeltaDir = "up" | "down" | null
@@ -45,7 +34,7 @@ function DeltaBadge({ d, goodDir }: { d: ReturnType<typeof delta>; goodDir: "up"
   const sign = d.diff > 0 ? "+" : ""
   const arrow = d.dir === "up" ? "↑" : "↓"
   return (
-    <span className={`text-xs font-medium ml-1 ${isGood ? "text-emerald-500" : "text-rose-400"}`}>
+    <span className={`text-xs font-medium ${isGood ? "text-emerald-500" : "text-rose-400"}`}>
       {arrow} {sign}{d.diff}
     </span>
   )
@@ -55,6 +44,8 @@ function KpiCard({
   label,
   value,
   unit,
+  secondaryValue,
+  secondaryUnit,
   d,
   goodDir,
   color,
@@ -62,6 +53,8 @@ function KpiCard({
   label: string
   value: number | null
   unit: string
+  secondaryValue?: number | null
+  secondaryUnit?: string
   d: ReturnType<typeof delta>
   goodDir: "up" | "down"
   color: string
@@ -70,11 +63,18 @@ function KpiCard({
     <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
       <p className="text-xs text-gray-500 mb-1">{label}</p>
       {value !== null ? (
-        <div className="flex items-baseline gap-1">
-          <p className={`text-2xl font-bold ${color}`}>{value}</p>
-          <p className="text-sm text-gray-400">{unit}</p>
-          <DeltaBadge d={d} goodDir={goodDir} />
-        </div>
+        <>
+          <div className="flex items-baseline gap-1 flex-wrap">
+            <p className={`text-2xl font-bold ${color}`}>{value}</p>
+            <p className="text-sm text-gray-400">{unit}</p>
+            {secondaryValue !== null && secondaryValue !== undefined && secondaryUnit && (
+              <p className="text-sm text-gray-400">({secondaryValue}{secondaryUnit})</p>
+            )}
+          </div>
+          <div className="mt-1 min-h-[1rem]">
+            <DeltaBadge d={d} goodDir={goodDir} />
+          </div>
+        </>
       ) : (
         <p className="text-lg font-medium text-gray-300">—</p>
       )}
@@ -82,142 +82,36 @@ function KpiCard({
   )
 }
 
-const W = 400
-const H = 100
-const PAD = 8
-
-const SVG_H = 80       // alto de render del SVG en px
-const TIP_W = 90       // ancho estimado del tooltip en px
-const CIRCLE_R = 6     // radio del punto activo
-
-interface TooltipState {
-  visible: boolean
-  tipX: number       // px desde la izquierda del contenedor (ya clampeado)
-  tipY: number       // px desde el tope del contenedor SVG
-  arrowOffset: number // px desde la izquierda del tooltip hasta el centro de la flecha
-  valor: string
-  fecha: string
-}
-
-function LineChart({ points, label, unit, color }: {
-  points: { fecha: string; value: number }[]
-  label: string
-  unit: string
-  color: string
+function FormulaCard({
+  title,
+  author,
+  formula,
+  result,
+  example,
+}: {
+  title: string
+  author?: string
+  formula: string
+  result: string | null
+  example?: string
 }) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [tooltip, setTooltip] = useState<TooltipState>({
-    visible: false, tipX: 0, tipY: 0, arrowOffset: TIP_W / 2 - 5, valor: "", fecha: "",
-  })
-
-  if (points.length < 2) return null
-
-  const vals = points.map((p) => p.value)
-  const minV = Math.min(...vals)
-  const maxV = Math.max(...vals)
-  const range = maxV - minV || 1
-
-  const coords = points.map((p, i) => ({
-    x: PAD + (i / (points.length - 1)) * (W - PAD * 2),
-    y: PAD + (1 - (p.value - minV) / range) * (H - PAD * 2),
-    ...p,
-  }))
-
-  const polyline = coords.map((c) => `${c.x},${c.y}`).join(" ")
-  const last = coords[coords.length - 1]
-  const first = coords[0]
-
-  function showTooltip(c: (typeof coords)[number]) {
-    const containerW = containerRef.current?.getBoundingClientRect().width ?? W
-
-    // Centro del punto en px dentro del contenedor
-    const centerX = (c.x / W) * containerW
-    // Tooltip: centrado en el punto, pero clampeado a los bordes
-    const tipX = Math.min(Math.max(centerX - TIP_W / 2, 0), containerW - TIP_W)
-    // La flecha apunta al punto: offset = centro_punto - borde_izq_tooltip
-    const arrowOffset = Math.min(Math.max(centerX - tipX - 5, 4), TIP_W - 14)
-    // Y en px: escalar viewBox→px reales, luego subir el radio del círculo
-    const tipY = c.y * (SVG_H / H) - CIRCLE_R
-
-    setTooltip({
-      visible: true,
-      tipX,
-      tipY,
-      arrowOffset,
-      valor: `${c.value} ${unit}`,
-      fecha: new Date(c.fecha).toLocaleDateString("es-AR", {
-        day: "2-digit", month: "2-digit", year: "numeric",
-      }),
-    })
-  }
-
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
-      <p className="text-sm font-semibold text-gray-700 mb-1">{label}</p>
-      <div className="flex justify-between text-xs text-gray-400 mb-1">
-        <span>{new Date(first.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}</span>
-        <span>{new Date(last.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}</span>
+    <div className="border border-gray-100 rounded-lg p-3 space-y-1.5">
+      <div className="flex items-baseline gap-2">
+        <p className="text-sm font-semibold text-gray-700">{title}</p>
+        {author && <p className="text-xs text-gray-400">({author})</p>}
       </div>
-
-      <div
-        ref={containerRef}
-        className="relative"
-        onMouseLeave={() => setTooltip((t) => ({ ...t, visible: false }))}
-      >
-        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full" style={{ height: SVG_H, display: "block" }}>
-          <polyline fill="none" stroke={color} strokeWidth="2.5" points={polyline} />
-          {coords.map((c, i) => (
-            <circle
-              key={i}
-              cx={c.x}
-              cy={c.y}
-              r={i === coords.length - 1 ? CIRCLE_R : 4}
-              fill={i === coords.length - 1 ? color : "white"}
-              stroke={color}
-              strokeWidth="2"
-              style={{ cursor: "pointer" }}
-              onMouseEnter={() => showTooltip(c)}
-              onTouchStart={(e) => { e.preventDefault(); showTooltip(c) }}
-              onTouchEnd={() => setTooltip((t) => ({ ...t, visible: false }))}
-            />
-          ))}
-        </svg>
-
-        {tooltip.visible && (
-          <div
-            className="pointer-events-none absolute z-10"
-            style={{
-              left: tooltip.tipX,
-              top: tooltip.tipY,
-              transform: "translateY(-100%)",
-              width: TIP_W,
-            }}
-          >
-            <div
-              className="text-white text-xs rounded-lg px-2.5 py-1.5 shadow-lg"
-              style={{ background: "rgba(17,24,39,0.9)" }}
-            >
-              <p className="font-semibold truncate">{tooltip.valor}</p>
-              <p style={{ color: "#9ca3af" }}>{tooltip.fecha}</p>
-            </div>
-            {/* flecha apuntando al punto exacto */}
-            <div
-              style={{
-                marginLeft: tooltip.arrowOffset,
-                width: 0, height: 0,
-                borderLeft: "5px solid transparent",
-                borderRight: "5px solid transparent",
-                borderTop: "5px solid rgba(17,24,39,0.9)",
-              }}
-            />
-          </div>
-        )}
-      </div>
-
-      <div className="flex justify-between text-xs text-gray-400 mt-1">
-        <span>{first.value} {unit}</span>
-        <span className="font-medium" style={{ color }}>{last.value} {unit}</span>
-      </div>
+      <p className="text-xs font-mono bg-gray-50 rounded px-2 py-1 text-gray-600 leading-relaxed">
+        {formula}
+      </p>
+      {example && (
+        <p className="text-xs text-gray-500 italic">{example}</p>
+      )}
+      {result !== null && (
+        <p className="text-xs text-gray-500">
+          Tu resultado: <span className="font-semibold text-gray-700">{result}</span>
+        </p>
+      )}
     </div>
   )
 }
@@ -225,6 +119,7 @@ function LineChart({ points, label, unit, color }: {
 export default function AntropometriaView() {
   const [data, setData] = useState<Antropometria[]>([])
   const [loading, setLoading] = useState(true)
+  const [showFormulas, setShowFormulas] = useState(false)
 
   useEffect(() => {
     fetch("/api/antropometria")
@@ -247,25 +142,27 @@ export default function AntropometriaView() {
     return (
       <div className="p-8 text-center text-gray-400">
         <div className="text-5xl mb-4">📏</div>
-        <p className="font-medium">No tenés mediciones registradas todavía.</p>
-        <p className="text-sm mt-1">Tu nutricionista cargará los datos en tu próxima consulta.</p>
+        <p className="font-medium">Tu nutricionista aún no registró mediciones.</p>
       </div>
     )
   }
 
-  // data está ordenado desc (más reciente primero)
   const latest = data[0]
   const prev = data[1] ?? null
 
-  const latestSuma = suma6(latest)
-  const prevSuma = prev ? suma6(prev) : null
+  const pctMusculo =
+    latest.masaMuscularKg !== null
+      ? Math.round((latest.masaMuscularKg / latest.pesoKg) * 1000) / 10
+      : null
+  const prevPctMusculo =
+    prev && prev.masaMuscularKg !== null
+      ? Math.round((prev.masaMuscularKg / prev.pesoKg) * 1000) / 10
+      : null
 
-  // Puntos para gráficos (orden cronológico asc)
-  const asc = [...data].reverse()
-  const puntosPliegues = asc.map((d) => ({ fecha: d.fecha, value: suma6(d) })).filter((p) => p.value !== null) as { fecha: string; value: number }[]
-  const puntosMusculo = asc.map((d) => ({ fecha: d.fecha, value: d.masaMuscularKg })).filter((p) => p.value !== null) as { fecha: string; value: number }[]
-  const puntosPeso = asc.map((d) => ({ fecha: d.fecha, value: d.pesoKg }))
-  const puntosGrasa = asc.map((d) => ({ fecha: d.fecha, value: d.masaGrasaKg })).filter((p) => p.value !== null) as { fecha: string; value: number }[]
+  const tallaM = (latest.tallaCm / 100).toFixed(2)
+  const imcDisplay = latest.imc !== null
+    ? latest.imc
+    : Math.round(latest.pesoKg / Math.pow(latest.tallaCm / 100, 2) * 10) / 10
 
   return (
     <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-6">
@@ -276,24 +173,7 @@ export default function AntropometriaView() {
         </p>
       </div>
 
-      {/* 4 KPI cards */}
       <div className="grid grid-cols-2 gap-3">
-        <KpiCard
-          label="Suma 6 pliegues"
-          value={latestSuma}
-          unit="mm"
-          d={delta(latestSuma, prevSuma)}
-          goodDir="down"
-          color="text-orange-500"
-        />
-        <KpiCard
-          label="Masa muscular"
-          value={latest.masaMuscularKg}
-          unit="kg"
-          d={delta(latest.masaMuscularKg, prev?.masaMuscularKg ?? null)}
-          goodDir="up"
-          color="text-blue-600"
-        />
         <KpiCard
           label="Peso"
           value={latest.pesoKg}
@@ -303,32 +183,130 @@ export default function AntropometriaView() {
           color="text-gray-700"
         />
         <KpiCard
-          label="Tejido adiposo"
+          label="Bícep contraído"
+          value={latest.brazoFlexionado}
+          unit="cm"
+          d={delta(latest.brazoFlexionado, prev?.brazoFlexionado ?? null)}
+          goodDir="up"
+          color="text-blue-600"
+        />
+        <KpiCard
+          label="Tórax mesoesternal"
+          value={latest.toraxMesoesternal}
+          unit="cm"
+          d={delta(latest.toraxMesoesternal, prev?.toraxMesoesternal ?? null)}
+          goodDir="up"
+          color="text-indigo-600"
+        />
+        <KpiCard
+          label="Cintura mínima"
+          value={latest.cinturaMinima}
+          unit="cm"
+          d={delta(latest.cinturaMinima, prev?.cinturaMinima ?? null)}
+          goodDir="down"
+          color="text-orange-500"
+        />
+        <KpiCard
+          label="Caderas máxima"
+          value={latest.caderaMaxima}
+          unit="cm"
+          d={delta(latest.caderaMaxima, prev?.caderaMaxima ?? null)}
+          goodDir="down"
+          color="text-orange-400"
+        />
+        <KpiCard
+          label="Kg de hueso"
+          value={latest.masaOseaKg}
+          unit="kg"
+          d={delta(latest.masaOseaKg, prev?.masaOseaKg ?? null)}
+          goodDir="up"
+          color="text-stone-500"
+        />
+        <KpiCard
+          label="Kg de grasa"
           value={latest.masaGrasaKg}
           unit="kg"
+          secondaryValue={latest.porcentajeGrasa}
+          secondaryUnit="%"
           d={delta(latest.masaGrasaKg, prev?.masaGrasaKg ?? null)}
           goodDir="down"
           color="text-rose-500"
         />
+        <KpiCard
+          label="Kg de músculo"
+          value={latest.masaMuscularKg}
+          unit="kg"
+          secondaryValue={pctMusculo}
+          secondaryUnit="%"
+          d={delta(latest.masaMuscularKg, prev?.masaMuscularKg ?? null)}
+          goodDir="up"
+          color="text-blue-700"
+        />
       </div>
 
-      {/* Gráficos de evolución */}
-      {data.length >= 2 && (
-        <div className="space-y-3">
-          <LineChart points={puntosPliegues} label="Suma 6 pliegues" unit="mm" color="#f97316" />
-          <LineChart points={puntosMusculo} label="Masa muscular" unit="kg" color="#2563eb" />
-          <LineChart points={puntosPeso} label="Peso" unit="kg" color="#374151" />
-          <LineChart points={puntosGrasa} label="Tejido adiposo" unit="kg" color="#f43f5e" />
-        </div>
-      )}
-
-      {/* Nota de la última medición */}
       {latest.notas && (
         <div className="bg-gray-50 rounded-xl p-3 text-sm text-gray-500">
           <p className="text-xs font-medium text-gray-400 mb-1">Nota del nutricionista</p>
           {latest.notas}
         </div>
       )}
+
+      {/* Sección de fórmulas */}
+      <div className="border border-gray-100 rounded-xl overflow-hidden">
+        <button
+          onClick={() => setShowFormulas((v) => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors"
+        >
+          <span>¿Cómo se calculan estos valores?</span>
+          <span className="text-gray-400">{showFormulas ? "▲" : "▼"}</span>
+        </button>
+
+        {showFormulas && (
+          <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-3">
+            <FormulaCard
+              title="IMC — Índice de Masa Corporal"
+              formula="IMC = peso (kg) / talla (m)²"
+              example={`Con tus datos: ${latest.pesoKg} / (${tallaM})² = ${imcDisplay}`}
+              result={null}
+            />
+
+            {latest.porcentajeGrasa !== null && (
+              <FormulaCard
+                title="% Grasa corporal"
+                author="Yuhasz, 6 pliegues"
+                formula={[
+                  "Σ6 = triceps + subescapular + supraespinal + abdominal + muslo medial + pantorrilla",
+                  "Hombre: Σ6 × 0.1051 + 2.585",
+                  "Mujer:  Σ6 × 0.1548 + 3.58",
+                ].join("\n")}
+                result={`${latest.porcentajeGrasa}%`}
+              />
+            )}
+
+            {latest.masaMuscularKg !== null && (
+              <FormulaCard
+                title="Masa muscular esquelética"
+                author="Lee et al."
+                formula={[
+                  "MM = talla(m) × [0.00744×Brazo_c² + 0.00088×Muslo_c² + 0.00441×Pantorrilla_c²]",
+                  "     + 2.4×sexo − 0.048×edad + 7.8",
+                  "X_c = perímetro − (pliegue / 10)  (corrección por grasa subcutánea)",
+                ].join("\n")}
+                result={`${latest.masaMuscularKg} kg`}
+              />
+            )}
+
+            {latest.masaOseaKg !== null && (
+              <FormulaCard
+                title="Masa ósea"
+                author="Martin"
+                formula="MO = 3.02 × [talla(m)² × Ø femoral × Ø humeral × 400]^0.712 × 0.001"
+                result={`${latest.masaOseaKg} kg`}
+              />
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

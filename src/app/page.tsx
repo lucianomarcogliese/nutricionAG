@@ -3,8 +3,10 @@ import Image from "next/image"
 import { getLandingContent } from "@/lib/landing-seed"
 import { prisma } from "@/lib/prisma"
 import { Salad, BarChart2, Dumbbell, Calendar, Target, Users } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 
-const FEATURE_ICONS = [Salad, BarChart2, Dumbbell, Calendar, Target, Users]
+const ICON_MAP: Record<string, LucideIcon> = { Salad, BarChart2, Dumbbell, Calendar, Target, Users }
+const ICON_FALLBACK: LucideIcon[] = [Salad, BarChart2, Dumbbell, Calendar, Target, Users]
 
 interface Testimonio {
   id: string
@@ -100,7 +102,7 @@ export default async function LandingPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {data.features.map((f, i) => {
-              const Icon = FEATURE_ICONS[i % FEATURE_ICONS.length]
+              const Icon = ICON_MAP[f.emoji] ?? ICON_FALLBACK[i % ICON_FALLBACK.length]
               return (
                 <div key={i} className="bg-gray-50 rounded-2xl p-8 border border-gray-100 hover:border-emerald-200 hover:shadow-sm transition-all">
                   <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center mb-4">
