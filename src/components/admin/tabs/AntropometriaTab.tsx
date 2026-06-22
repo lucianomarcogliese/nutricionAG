@@ -21,6 +21,7 @@ interface Antropometria {
   fecha: string
   pesoKg: number
   tallaCm: number
+  tallaSentado: number | null
   imc: number | null
   icc: number | null
   porcentajeGrasa: number | null
@@ -31,28 +32,40 @@ interface Antropometria {
   endomorfismo: number | null
   mesomorfismo: number | null
   ectomorfismo: number | null
-  cinturaCm: number | null
-  caderaCm: number | null
-  brazoCm: number | null
-  musloDerechoCm: number | null
-  pantorrillaDerechaCm: number | null
+  // Diámetros
+  diametroBiacromial: number | null
+  diametroToraxTransverso: number | null
+  diametroToraxAnteroposterior: number | null
+  diametroBiiliocrestideo: number | null
+  diametroBiepicondileoHumeral: number | null
+  diametroBiepicondileoFemoral: number | null
+  diametroMunieca: number | null
+  // Perímetros
+  perimetroCabeza: number | null
+  brazoRelajado: number | null
+  brazoFlexionado: number | null
+  perimetroAntebrazo: number | null
+  toraxMesoesternal: number | null
+  cinturaMinima: number | null
+  caderaMaxima: number | null
+  musloSuperior: number | null
+  musloMedial: number | null
+  pantorrillaMaxima: number | null
+  // Pliegues
   pliegueSubescapular: number | null
   pliegueTriceps: number | null
-  pliegueSuprailiaco: number | null
+  pliegueSupraespinal: number | null
   pliegueAbdominal: number | null
-  pliegueMusloAnterior: number | null
+  pliegueMusloMedial: number | null
   plieguePantorrilla: number | null
-  diametroBiepicondileoFemoral: number | null
-  diametroBiepicondileoHumeral: number | null
-  diametroMunieca: number | null
   notas: string | null
   nutricionista: { id: string; nombre: string; color: string } | null
 }
 
-// ── Chart helpers (mirrors AntropometriaView.tsx) ──────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function suma6(a: Antropometria): number | null {
-  const vals = [a.pliegueTriceps, a.pliegueSubescapular, a.pliegueSuprailiaco, a.pliegueAbdominal, a.pliegueMusloAnterior, a.plieguePantorrilla]
+  const vals = [a.pliegueTriceps, a.pliegueSubescapular, a.pliegueSupraespinal, a.pliegueAbdominal, a.pliegueMusloMedial, a.plieguePantorrilla]
   if (vals.some((v) => v === null)) return null
   return Math.round((vals as number[]).reduce((s, v) => s + v, 0) * 10) / 10
 }
@@ -98,8 +111,8 @@ function KpiCard({ label, value, unit, d, goodDir, color }: {
 }
 
 const SVG_W = 400
-const SVG_H_VB = 100  // viewBox height
-const SVG_H_PX = 80   // rendered px height
+const SVG_H_VB = 100
+const SVG_H_PX = 80
 const SVG_PAD = 8
 const TIP_W = 90
 const CIRCLE_R = 6
@@ -195,33 +208,66 @@ function LineChart({ points, label, unit, color }: {
   )
 }
 
-// ───────────────────────────────────────────────────────────────────────────
+// ── Formulario ─────────────────────────────────────────────────────────────────
 
 const BLANK_FORM = {
   fecha: new Date().toISOString().slice(0, 10),
   nutricionistaId: "",
+  // Básicos
   pesoKg: "",
   tallaCm: "",
-  cinturaCm: "",
-  caderaCm: "",
-  brazoCm: "",
-  musloDerechoCm: "",
-  pantorrillaDerechaCm: "",
+  tallaSentado: "",
+  // Diámetros
+  diametroBiacromial: "",
+  diametroToraxTransverso: "",
+  diametroToraxAnteroposterior: "",
+  diametroBiiliocrestideo: "",
+  diametroBiepicondileoHumeral: "",
+  diametroBiepicondileoFemoral: "",
+  diametroMunieca: "",
+  // Perímetros
+  perimetroCabeza: "",
+  brazoRelajado: "",
+  brazoFlexionado: "",
+  perimetroAntebrazo: "",
+  toraxMesoesternal: "",
+  cinturaMinima: "",
+  caderaMaxima: "",
+  musloSuperior: "",
+  musloMedial: "",
+  pantorrillaMaxima: "",
+  // Pliegues
   pliegueSubescapular: "",
   pliegueTriceps: "",
-  pliegueSuprailiaco: "",
+  pliegueSupraespinal: "",
   pliegueAbdominal: "",
-  pliegueMusloAnterior: "",
+  pliegueMusloMedial: "",
   plieguePantorrilla: "",
-  pliegueAxilarMedio: "",
-  plieguePectoral: "",
-  diametroBiepicondileoFemoral: "",
-  diametroBiepicondileoHumeral: "",
-  diametroMunieca: "",
   notas: "",
 }
 
 type FormState = typeof BLANK_FORM
+
+// Campos FIJO: se precargan de la última medición
+const FIJO_FIELDS = [
+  "tallaCm", "tallaSentado",
+  "diametroBiacromial", "diametroToraxTransverso", "diametroToraxAnteroposterior",
+  "diametroBiiliocrestideo", "diametroBiepicondileoHumeral", "diametroBiepicondileoFemoral",
+  "diametroMunieca", "perimetroCabeza",
+] as const
+
+type FijoField = typeof FIJO_FIELDS[number]
+
+function prefillFijo(latest: Antropometria): Partial<FormState> {
+  const patch: Partial<FormState> = {}
+  for (const k of FIJO_FIELDS) {
+    const v = latest[k as keyof Antropometria]
+    if (v !== null && v !== undefined) {
+      patch[k as FijoField] = String(v)
+    }
+  }
+  return patch
+}
 
 function n(v: string) {
   return v ? Number(v) : undefined
@@ -234,32 +280,34 @@ function Preview({ form, sexo, edad }: { form: FormState; sexo: string | null; e
     tallaCm: Number(form.tallaCm),
     edad: edad ?? 25,
     sexo: (sexo as "MALE" | "FEMALE") ?? "MALE",
-    cinturaCm: n(form.cinturaCm),
-    caderaCm: n(form.caderaCm),
-    brazoCm: n(form.brazoCm),
-    musloDerechoCm: n(form.musloDerechoCm),
-    pantorrillaDerechaCm: n(form.pantorrillaDerechaCm),
+    cinturaMinima: n(form.cinturaMinima),
+    caderaMaxima: n(form.caderaMaxima),
+    brazoFlexionado: n(form.brazoFlexionado),
+    musloSuperior: n(form.musloSuperior),
+    pantorrillaMaxima: n(form.pantorrillaMaxima),
     pliegueSubescapular: n(form.pliegueSubescapular),
     pliegueTriceps: n(form.pliegueTriceps),
-    pliegueSuprailiaco: n(form.pliegueSuprailiaco),
+    pliegueSupraespinal: n(form.pliegueSupraespinal),
     pliegueAbdominal: n(form.pliegueAbdominal),
-    pliegueMusloAnterior: n(form.pliegueMusloAnterior),
+    pliegueMusloMedial: n(form.pliegueMusloMedial),
     plieguePantorrilla: n(form.plieguePantorrilla),
     diametroBiepicondileoFemoral: n(form.diametroBiepicondileoFemoral),
     diametroBiepicondileoHumeral: n(form.diametroBiepicondileoHumeral),
     diametroMunieca: n(form.diametroMunieca),
   })
+
+  const suma6vals = [n(form.pliegueTriceps), n(form.pliegueSubescapular), n(form.pliegueSupraespinal), n(form.pliegueAbdominal), n(form.pliegueMusloMedial), n(form.plieguePantorrilla)]
+  const suma6 = suma6vals.every(Boolean)
+    ? `${Math.round((suma6vals as number[]).reduce((a, b) => a + b, 0) * 10) / 10} mm`
+    : "—"
+
   return (
     <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
       <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide mb-3">Vista previa calculada</p>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
         <div className="bg-white rounded-lg p-3 border border-emerald-100">
           <p className="text-xs text-gray-400 mb-1">Suma 6 pliegues</p>
-          <p className="font-bold text-orange-500 text-lg">
-            {[n(form.pliegueTriceps), n(form.pliegueSubescapular), n(form.pliegueSuprailiaco), n(form.pliegueAbdominal), n(form.pliegueMusloAnterior), n(form.plieguePantorrilla)].every(Boolean)
-              ? `${Math.round(([n(form.pliegueTriceps)!, n(form.pliegueSubescapular)!, n(form.pliegueSuprailiaco)!, n(form.pliegueAbdominal)!, n(form.pliegueMusloAnterior)!, n(form.plieguePantorrilla)!].reduce((a, b) => a + b, 0)) * 10) / 10} mm`
-              : "—"}
-          </p>
+          <p className="font-bold text-orange-500 text-lg">{suma6}</p>
         </div>
         <div className="bg-white rounded-lg p-3 border border-emerald-100">
           <p className="text-xs text-gray-400 mb-1">Masa muscular</p>
@@ -278,23 +326,32 @@ function Preview({ form, sexo, edad }: { form: FormState; sexo: string | null; e
   )
 }
 
-function FieldInput({ label, name, value, onChange, step = "0.1", unit }: {
-  label: string; name: string; value: string; onChange: (v: string) => void; step?: string; unit?: string
+function FieldInput({ label, name, value, onChange, step = "0.1", unit, fixed }: {
+  label: string; name: string; value: string; onChange: (v: string) => void
+  step?: string; unit?: string; fixed?: boolean
 }) {
   return (
     <div>
-      <label className="text-xs text-gray-500 block mb-1">{label}{unit && <span className="text-gray-400"> ({unit})</span>}</label>
+      <label className="text-xs text-gray-500 block mb-1">
+        {label}
+        {unit && <span className="text-gray-400"> ({unit})</span>}
+        {fixed && <span className="ml-1 text-gray-300 text-[10px]">🔒</span>}
+      </label>
       <input
         type="number"
         step={step}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300"
+        className={`w-full border rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 ${
+          fixed ? "border-gray-150 bg-gray-50 text-gray-600" : "border-gray-200"
+        }`}
         placeholder="—"
       />
     </div>
   )
 }
+
+// ── Componente principal ───────────────────────────────────────────────────────
 
 export function AntropometriaTab() {
   const [users, setUsers] = useState<UserOption[]>([])
@@ -318,11 +375,18 @@ export function AntropometriaTab() {
   }, [])
 
   useEffect(() => {
-    if (!selectedUserId) { setHistory([]); return }
+    if (!selectedUserId) { setHistory([]); setForm(BLANK_FORM); return }
     setLoadingHistory(true)
     fetch(`/api/admin/antropometria/${selectedUserId}`)
       .then((r) => r.json())
-      .then((j) => setHistory(j.antropometrias ?? []))
+      .then((j) => {
+        const rows: Antropometria[] = j.antropometrias ?? []
+        setHistory(rows)
+        // Precargar campos FIJO de la última medición
+        if (rows.length > 0) {
+          setForm((prev) => ({ ...prev, ...prefillFijo(rows[0]) }))
+        }
+      })
       .finally(() => setLoadingHistory(false))
   }, [selectedUserId])
 
@@ -349,7 +413,13 @@ export function AntropometriaTab() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setHistory((h) => [data.antropometria, ...h])
-      setForm(BLANK_FORM)
+      // Mantener FIJO de la medición recién guardada, limpiar DINÁMICO
+      setForm({
+        ...BLANK_FORM,
+        fecha: new Date().toISOString().slice(0, 10),
+        nutricionistaId: form.nutricionistaId,
+        ...prefillFijo(data.antropometria),
+      })
       setMsg("✓ Medición guardada correctamente.")
     } catch (e: unknown) {
       setMsg("Error: " + (e instanceof Error ? e.message : String(e)))
@@ -402,11 +472,15 @@ export function AntropometriaTab() {
         <>
           {/* Formulario nueva medición */}
           <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
-            <p className="text-sm font-semibold text-gray-700 mb-4">
-              Nueva medición —{" "}
-              <span className="text-emerald-600">{selectedUser.profile?.fullName ?? selectedUser.name}</span>
-            </p>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm font-semibold text-gray-700">
+                Nueva medición —{" "}
+                <span className="text-emerald-600">{selectedUser.profile?.fullName ?? selectedUser.name}</span>
+              </p>
+              <span className="text-xs text-gray-400">🔒 = se precarga de la última medición</span>
+            </div>
 
+            {/* Fecha y nutricionista */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
               <div>
                 <label className="text-xs text-gray-500 block mb-1">Fecha</label>
@@ -425,47 +499,60 @@ export function AntropometriaTab() {
                   className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300"
                 >
                   <option value="">Sin asignar</option>
-                  {nutritionists.map((n) => (
-                    <option key={n.id} value={n.id}>{n.nombre}</option>
+                  {nutritionists.map((nc) => (
+                    <option key={nc.id} value={nc.id}>{nc.nombre}</option>
                   ))}
                 </select>
               </div>
             </div>
 
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Medidas básicas</p>
+            {/* Básicos */}
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Básicos</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
               <FieldInput label="Peso" name="pesoKg" value={form.pesoKg} onChange={setField("pesoKg")} unit="kg" />
-              <FieldInput label="Talla" name="tallaCm" value={form.tallaCm} onChange={setField("tallaCm")} unit="cm" />
+              <FieldInput label="Talla" name="tallaCm" value={form.tallaCm} onChange={setField("tallaCm")} unit="cm" fixed />
+              <FieldInput label="Talla sentado" name="tallaSentado" value={form.tallaSentado} onChange={setField("tallaSentado")} unit="cm" fixed />
             </div>
 
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Perímetros</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-              <FieldInput label="Cintura" name="cinturaCm" value={form.cinturaCm} onChange={setField("cinturaCm")} unit="cm" />
-              <FieldInput label="Cadera" name="caderaCm" value={form.caderaCm} onChange={setField("caderaCm")} unit="cm" />
-              <FieldInput label="Brazo contraído" name="brazoCm" value={form.brazoCm} onChange={setField("brazoCm")} unit="cm" />
-              <FieldInput label="Muslo derecho" name="musloDerechoCm" value={form.musloDerechoCm} onChange={setField("musloDerechoCm")} unit="cm" />
-              <FieldInput label="Pantorrilla derecha" name="pantorrillaDerechaCm" value={form.pantorrillaDerechaCm} onChange={setField("pantorrillaDerechaCm")} unit="cm" />
-            </div>
-
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Pliegues cutáneos</p>
+            {/* Diámetros */}
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Diámetros (cm) 🔒</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-              <FieldInput label="Subescapular" name="pliegueSubescapular" value={form.pliegueSubescapular} onChange={setField("pliegueSubescapular")} unit="mm" />
+              <FieldInput label="Biacromial" name="diametroBiacromial" value={form.diametroBiacromial} onChange={setField("diametroBiacromial")} unit="cm" fixed />
+              <FieldInput label="Tórax Transverso" name="diametroToraxTransverso" value={form.diametroToraxTransverso} onChange={setField("diametroToraxTransverso")} unit="cm" fixed />
+              <FieldInput label="Tórax Anteroposterior" name="diametroToraxAnteroposterior" value={form.diametroToraxAnteroposterior} onChange={setField("diametroToraxAnteroposterior")} unit="cm" fixed />
+              <FieldInput label="Bi-iliocrestídeo" name="diametroBiiliocrestideo" value={form.diametroBiiliocrestideo} onChange={setField("diametroBiiliocrestideo")} unit="cm" fixed />
+              <FieldInput label="Humeral/biepicondilar" name="diametroBiepicondileoHumeral" value={form.diametroBiepicondileoHumeral} onChange={setField("diametroBiepicondileoHumeral")} unit="cm" fixed />
+              <FieldInput label="Femoral/biepicondilar" name="diametroBiepicondileoFemoral" value={form.diametroBiepicondileoFemoral} onChange={setField("diametroBiepicondileoFemoral")} unit="cm" fixed />
+              <FieldInput label="Muñeca" name="diametroMunieca" value={form.diametroMunieca} onChange={setField("diametroMunieca")} unit="cm" fixed />
+            </div>
+
+            {/* Perímetros */}
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Perímetros (cm)</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+              <FieldInput label="Cabeza" name="perimetroCabeza" value={form.perimetroCabeza} onChange={setField("perimetroCabeza")} unit="cm" fixed />
+              <FieldInput label="Brazo relajado" name="brazoRelajado" value={form.brazoRelajado} onChange={setField("brazoRelajado")} unit="cm" />
+              <FieldInput label="Brazo flexionado en tensión" name="brazoFlexionado" value={form.brazoFlexionado} onChange={setField("brazoFlexionado")} unit="cm" />
+              <FieldInput label="Antebrazo" name="perimetroAntebrazo" value={form.perimetroAntebrazo} onChange={setField("perimetroAntebrazo")} unit="cm" />
+              <FieldInput label="Tórax Mesoesternal" name="toraxMesoesternal" value={form.toraxMesoesternal} onChange={setField("toraxMesoesternal")} unit="cm" />
+              <FieldInput label="Cintura mínima" name="cinturaMinima" value={form.cinturaMinima} onChange={setField("cinturaMinima")} unit="cm" />
+              <FieldInput label="Caderas máxima" name="caderaMaxima" value={form.caderaMaxima} onChange={setField("caderaMaxima")} unit="cm" />
+              <FieldInput label="Muslo superior" name="musloSuperior" value={form.musloSuperior} onChange={setField("musloSuperior")} unit="cm" />
+              <FieldInput label="Muslo medial" name="musloMedial" value={form.musloMedial} onChange={setField("musloMedial")} unit="cm" />
+              <FieldInput label="Pantorrilla máxima" name="pantorrillaMaxima" value={form.pantorrillaMaxima} onChange={setField("pantorrillaMaxima")} unit="cm" />
+            </div>
+
+            {/* Pliegues */}
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Pliegues cutáneos (mm)</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
               <FieldInput label="Tríceps" name="pliegueTriceps" value={form.pliegueTriceps} onChange={setField("pliegueTriceps")} unit="mm" />
-              <FieldInput label="Suprailiaco" name="pliegueSuprailiaco" value={form.pliegueSuprailiaco} onChange={setField("pliegueSuprailiaco")} unit="mm" />
+              <FieldInput label="Subescapular" name="pliegueSubescapular" value={form.pliegueSubescapular} onChange={setField("pliegueSubescapular")} unit="mm" />
+              <FieldInput label="Supraespinal" name="pliegueSupraespinal" value={form.pliegueSupraespinal} onChange={setField("pliegueSupraespinal")} unit="mm" />
               <FieldInput label="Abdominal" name="pliegueAbdominal" value={form.pliegueAbdominal} onChange={setField("pliegueAbdominal")} unit="mm" />
-              <FieldInput label="Muslo anterior" name="pliegueMusloAnterior" value={form.pliegueMusloAnterior} onChange={setField("pliegueMusloAnterior")} unit="mm" />
+              <FieldInput label="Muslo medial" name="pliegueMusloMedial" value={form.pliegueMusloMedial} onChange={setField("pliegueMusloMedial")} unit="mm" />
               <FieldInput label="Pantorrilla" name="plieguePantorrilla" value={form.plieguePantorrilla} onChange={setField("plieguePantorrilla")} unit="mm" />
-              <FieldInput label="Axilar medio" name="pliegueAxilarMedio" value={form.pliegueAxilarMedio} onChange={setField("pliegueAxilarMedio")} unit="mm" />
-              <FieldInput label="Pectoral" name="plieguePectoral" value={form.plieguePectoral} onChange={setField("plieguePectoral")} unit="mm" />
             </div>
 
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Diámetros óseos</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-              <FieldInput label="Biepicondileo femoral" name="diametroBiepicondileoFemoral" value={form.diametroBiepicondileoFemoral} onChange={setField("diametroBiepicondileoFemoral")} unit="cm" />
-              <FieldInput label="Biepicondileo humeral" name="diametroBiepicondileoHumeral" value={form.diametroBiepicondileoHumeral} onChange={setField("diametroBiepicondileoHumeral")} unit="cm" />
-              <FieldInput label="Muñeca" name="diametroMunieca" value={form.diametroMunieca} onChange={setField("diametroMunieca")} unit="cm" />
-            </div>
-
+            {/* Notas */}
             <div className="mb-4">
               <label className="text-xs text-gray-500 block mb-1">Notas</label>
               <textarea
@@ -477,7 +564,7 @@ export function AntropometriaTab() {
               />
             </div>
 
-            {/* Vista previa en tiempo real */}
+            {/* Vista previa */}
             <Preview form={form} sexo={selectedUser.profile?.sex ?? null} edad={selectedUser.profile?.age ?? null} />
 
             <div className="flex items-center gap-3 mt-4">
@@ -502,39 +589,117 @@ export function AntropometriaTab() {
               <p className="text-sm text-gray-400">Sin mediciones registradas.</p>
             )}
             <div className="space-y-2">
-              {history.map((item) => (
-                <div key={item.id} className="border border-gray-100 rounded-xl overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
-                    <div className="flex items-center gap-3">
-                      <span className="font-medium text-gray-700 text-sm">
-                        {new Date(item.fecha).toLocaleDateString("es-AR")}
-                      </span>
-                      <span className="text-sm text-gray-500">{item.pesoKg} kg · {item.tallaCm} cm</span>
-                      {item.imc !== null && (
-                        <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">IMC {item.imc.toFixed(1)}</span>
+              {history.map((item, i) => {
+                const prev = history[i + 1] ?? null
+                const latestSuma = suma6(item)
+                const prevSuma = prev ? suma6(prev) : null
+                return (
+                  <div key={item.id} className="border border-gray-100 rounded-xl overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
+                      <div className="flex items-center gap-3">
+                        <span className="font-medium text-gray-700 text-sm">
+                          {new Date(item.fecha).toLocaleDateString("es-AR")}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {item.pesoKg} kg
+                          <DeltaBadge d={delta(item.pesoKg, prev?.pesoKg ?? null)} goodDir="down" />
+                          {" · "}{item.tallaCm} cm
+                        </span>
+                        {item.imc !== null && (
+                          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">IMC {item.imc.toFixed(1)}</span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        disabled={deletingId === item.id}
+                        className="text-xs text-red-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                      >
+                        {deletingId === item.id ? "..." : "Eliminar"}
+                      </button>
+                    </div>
+                    <div className="px-4 py-3 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                      {latestSuma !== null && (
+                        <div>
+                          <span className="text-gray-400 block text-xs">Suma 6 pliegues</span>
+                          <p className="font-semibold text-orange-500">
+                            {latestSuma} mm
+                            <DeltaBadge d={delta(latestSuma, prevSuma)} goodDir="down" />
+                          </p>
+                        </div>
+                      )}
+                      {item.masaMuscularKg !== null && (
+                        <div>
+                          <span className="text-gray-400 block text-xs">Masa muscular</span>
+                          <p className="font-semibold text-blue-600">
+                            {item.masaMuscularKg} kg
+                            <DeltaBadge d={delta(item.masaMuscularKg, prev?.masaMuscularKg ?? null)} goodDir="up" />
+                          </p>
+                        </div>
+                      )}
+                      {item.masaGrasaKg !== null && (
+                        <div>
+                          <span className="text-gray-400 block text-xs">Tejido adiposo</span>
+                          <p className="font-semibold text-rose-500">
+                            {item.masaGrasaKg} kg
+                            <DeltaBadge d={delta(item.masaGrasaKg, prev?.masaGrasaKg ?? null)} goodDir="down" />
+                          </p>
+                        </div>
+                      )}
+                      {item.porcentajeGrasa !== null && (
+                        <div>
+                          <span className="text-gray-400 block text-xs">% Grasa</span>
+                          <p className="font-semibold text-amber-600">
+                            {item.porcentajeGrasa}%
+                            <DeltaBadge d={delta(item.porcentajeGrasa, prev?.porcentajeGrasa ?? null)} goodDir="down" />
+                          </p>
+                        </div>
+                      )}
+                      {item.cinturaMinima !== null && (
+                        <div>
+                          <span className="text-gray-400 block text-xs">Cintura mínima</span>
+                          <p className="font-semibold text-gray-700">
+                            {item.cinturaMinima} cm
+                            <DeltaBadge d={delta(item.cinturaMinima, prev?.cinturaMinima ?? null)} goodDir="down" />
+                          </p>
+                        </div>
+                      )}
+                      {item.caderaMaxima !== null && (
+                        <div>
+                          <span className="text-gray-400 block text-xs">Caderas máxima</span>
+                          <p className="font-semibold text-gray-700">
+                            {item.caderaMaxima} cm
+                            <DeltaBadge d={delta(item.caderaMaxima, prev?.caderaMaxima ?? null)} goodDir="down" />
+                          </p>
+                        </div>
+                      )}
+                      {item.musloSuperior !== null && (
+                        <div>
+                          <span className="text-gray-400 block text-xs">Muslo superior</span>
+                          <p className="font-semibold text-gray-700">
+                            {item.musloSuperior} cm
+                            <DeltaBadge d={delta(item.musloSuperior, prev?.musloSuperior ?? null)} goodDir="down" />
+                          </p>
+                        </div>
+                      )}
+                      {item.pantorrillaMaxima !== null && (
+                        <div>
+                          <span className="text-gray-400 block text-xs">Pantorrilla máxima</span>
+                          <p className="font-semibold text-gray-700">
+                            {item.pantorrillaMaxima} cm
+                            <DeltaBadge d={delta(item.pantorrillaMaxima, prev?.pantorrillaMaxima ?? null)} goodDir="down" />
+                          </p>
+                        </div>
+                      )}
+                      {item.notas && (
+                        <div className="col-span-full mt-1">
+                          <span className="text-gray-400 text-xs">Notas: </span>
+                          <span className="text-gray-600 text-xs">{item.notas}</span>
+                        </div>
                       )}
                     </div>
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      disabled={deletingId === item.id}
-                      className="text-xs text-red-400 hover:text-red-600 transition-colors disabled:opacity-50"
-                    >
-                      {deletingId === item.id ? "..." : "Eliminar"}
-                    </button>
                   </div>
-                  <div className="px-4 py-3 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                    {(() => {
-                      const vals = [item.pliegueTriceps, item.pliegueSubescapular, item.pliegueSuprailiaco, item.pliegueAbdominal, item.pliegueMusloAnterior, item.plieguePantorrilla]
-                      const suma = vals.every((v) => v !== null) ? Math.round(vals.reduce((a, b) => a + b!, 0) * 10) / 10 : null
-                      return suma !== null ? <div><span className="text-gray-400 block text-xs">Suma 6 pliegues</span><p className="font-semibold text-orange-500">{suma} mm</p></div> : null
-                    })()}
-                    {item.masaMuscularKg !== null && <div><span className="text-gray-400 block text-xs">Masa muscular</span><p className="font-semibold text-blue-600">{item.masaMuscularKg} kg</p></div>}
-                    <div><span className="text-gray-400 block text-xs">Peso</span><p className="font-semibold text-gray-700">{item.pesoKg} kg</p></div>
-                    {item.masaGrasaKg !== null && <div><span className="text-gray-400 block text-xs">Tejido adiposo</span><p className="font-semibold text-rose-500">{item.masaGrasaKg} kg</p></div>}
-                    {item.notas && <div className="col-span-full mt-1"><span className="text-gray-400 text-xs">Notas: </span><span className="text-gray-600 text-xs">{item.notas}</span></div>}
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
