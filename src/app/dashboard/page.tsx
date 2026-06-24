@@ -255,11 +255,11 @@ export default async function DashboardPage() {
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+          <Link href="/dashboard/nutricion" className="block bg-white rounded-2xl border border-gray-200 shadow-sm p-5 hover:border-emerald-300 transition-colors">
             <Salad className="w-5 h-5 text-gray-400 mb-2" />
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Plan nutricional</p>
-            <p className="text-sm text-gray-400 mt-1">Próximamente</p>
-          </div>
+            <p className="text-sm text-emerald-600 mt-1 hover:underline">Ver mi plan →</p>
+          </Link>
         </div>
 
         <ProximoTurno userId={session.user.id} />

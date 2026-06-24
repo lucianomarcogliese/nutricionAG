@@ -33,7 +33,7 @@ function MacroPill({ label, value, color }: { label: string; value: string; colo
 function RecetaModal({ receta, onClose, onToggleFav }: { receta: Receta; onClose: () => void; onToggleFav: (id: string) => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[92vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-label={receta.titulo} className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[92vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         {receta.imagenUrl && (
           <div className="relative h-52">
             <Image fill src={receta.imagenUrl} alt={receta.titulo} className="object-cover rounded-t-2xl" sizes="(max-width: 640px) 100vw, 512px" />

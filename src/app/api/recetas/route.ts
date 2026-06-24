@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
+import { logger } from "@/lib/logger"
 
 type RecetaRow = {
   id: string; titulo: string; descripcion: string | null; imagenUrl: string | null
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest) {
     const result = recetas.map((r) => ({ ...r, isFavorito: favSet.has(r.id) }))
     return NextResponse.json({ recetas: result })
   } catch (error) {
-    console.error("GET /api/recetas error:", error)
+    logger.error("GET /api/recetas error:", error)
     return NextResponse.json({ error: "Error al obtener recetas" }, { status: 500 })
   }
 }

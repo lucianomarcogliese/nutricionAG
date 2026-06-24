@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import type { Permisos } from "@/lib/plan-seed"
+import { logger } from "@/lib/logger"
 
 export async function PATCH(
   req: NextRequest,
@@ -58,7 +59,7 @@ export async function PATCH(
 
     return NextResponse.json({ plan })
   } catch (error) {
-    console.error("PATCH /api/admin/planes/[nombre] error:", error)
+    logger.error("PATCH /api/admin/planes/[nombre] error:", error)
     return NextResponse.json({ error: "Error al actualizar plan" }, { status: 500 })
   }
 }

@@ -2,8 +2,7 @@ import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { getPermisos } from "@/lib/permisos"
-import { prisma } from "@/lib/prisma"
-import { Prisma } from "@/generated/prisma/client"
+import { getProfileId } from "@/lib/profile-utils"
 import { MensajesView } from "@/components/mensajes/MensajesView"
 
 export default async function MensajesPage() {
@@ -45,10 +44,7 @@ export default async function MensajesPage() {
     )
   }
 
-  const profileRows = await prisma.$queryRaw<{ id: string }[]>(
-    Prisma.sql`SELECT id FROM "Profile" WHERE "userId" = ${session.user.id} LIMIT 1`
-  )
-  const profileId = profileRows[0]?.id ?? ""
+  const profileId = await getProfileId(session.user.id) ?? ""
 
   return <MensajesView profileId={profileId} userId={session.user.id} />
 }

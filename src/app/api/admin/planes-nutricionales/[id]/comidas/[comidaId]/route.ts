@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
+import { logger } from "@/lib/logger"
 
 type Params = { params: Promise<{ id: string; comidaId: string }> }
 
@@ -30,7 +31,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
     return NextResponse.json({ comida: updated })
   } catch (error) {
-    console.error("PUT /api/admin/planes-nutricionales/[id]/comidas/[comidaId] error:", error instanceof Error ? error.message : error)
+    logger.error("PUT /api/admin/planes-nutricionales/[id]/comidas/[comidaId] error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al actualizar comida" }, { status: 500 })
   }
 }

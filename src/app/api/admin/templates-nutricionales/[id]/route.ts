@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import type { ObjetivoPlan } from "@/generated/prisma/enums"
+import { logger } from "@/lib/logger"
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -38,7 +39,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
     return NextResponse.json({ template })
   } catch (error) {
-    console.error("GET /api/admin/templates-nutricionales/[id] error:", error instanceof Error ? error.message : error)
+    logger.error("GET /api/admin/templates-nutricionales/[id] error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al obtener template" }, { status: 500 })
   }
 }
@@ -116,7 +117,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
     return NextResponse.json({ template: updated })
   } catch (error) {
-    console.error("PUT /api/admin/templates-nutricionales/[id] error:", error instanceof Error ? error.message : error)
+    logger.error("PUT /api/admin/templates-nutricionales/[id] error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al actualizar template" }, { status: 500 })
   }
 }
@@ -136,7 +137,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     await prisma.templatePlan.delete({ where: { id } })
     return NextResponse.json({ ok: true })
   } catch (error) {
-    console.error("DELETE /api/admin/templates-nutricionales/[id] error:", error instanceof Error ? error.message : error)
+    logger.error("DELETE /api/admin/templates-nutricionales/[id] error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al eliminar template" }, { status: 500 })
   }
 }

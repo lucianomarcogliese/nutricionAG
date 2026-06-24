@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 
 interface NutriUser {
   id: string
@@ -268,6 +269,7 @@ function NuevoModal({ onCreated, onClose }: { onCreated: (n: Nutritionist) => vo
 }
 
 export function NutricionistasTab() {
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [nutris, setNutris] = useState<Nutritionist[]>([])
   const [loading, setLoading] = useState(true)
   const [linkModal, setLinkModal] = useState<string | null>(null)
@@ -304,7 +306,7 @@ export function NutricionistasTab() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("¿Eliminar este nutricionista? Esta acción no se puede deshacer.")) return
+    setPendingDeleteId(null)
     setDeleting(id)
     try {
       const res = await fetch(`/api/admin/nutritionists/${id}`, { method: "DELETE" })
@@ -398,7 +400,7 @@ export function NutricionistasTab() {
                   {toggling === n.id ? "..." : n.activo ? "Desactivar" : "Activar"}
                 </button>
                 <button
-                  onClick={() => handleDelete(n.id)}
+                  onClick={() => setPendingDeleteId(n.id)}
                   disabled={deleting === n.id}
                   className="text-xs text-red-400 hover:text-red-600 transition-colors disabled:opacity-50"
                 >
@@ -422,6 +424,14 @@ export function NutricionistasTab() {
         <NuevoModal
           onCreated={(n) => setNutris((prev) => [n, ...prev])}
           onClose={() => setShowNuevo(false)}
+        />
+      )}
+
+      {pendingDeleteId && (
+        <ConfirmDialog
+          message="¿Eliminar este nutricionista? Esta acción no se puede deshacer."
+          onConfirm={() => handleDelete(pendingDeleteId)}
+          onCancel={() => setPendingDeleteId(null)}
         />
       )}
     </div>

@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
+import { logger } from "@/lib/logger"
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -15,7 +16,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    console.error("DELETE /api/admin/antropometria/entry/[id] error:", error)
+    logger.error("DELETE /api/admin/antropometria/entry/[id] error:", error)
     return NextResponse.json({ error: "Error al eliminar" }, { status: 500 })
   }
 }

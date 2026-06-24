@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
 import cloudinary from "@/lib/cloudinary"
+import { logger } from "@/lib/logger"
 
 function newId() {
   return `cm${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`
@@ -49,7 +50,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ recetas, total, page, totalPages: Math.ceil(total / limit) })
   } catch (error) {
-    console.error("GET /api/admin/recetas error:", error)
+    logger.error("GET /api/admin/recetas error:", error)
     return NextResponse.json({ error: "Error al obtener recetas" }, { status: 500 })
   }
 }
@@ -74,7 +75,7 @@ export async function POST(req: NextRequest) {
     const imagenFile = formData.get("imagen") as File | null
     if (imagenFile && imagenFile.size > 0) {
       try { imagenUrl = await uploadImagen(imagenFile) } catch (e) {
-        console.error("Cloudinary upload error:", e)
+        logger.error("Cloudinary upload error:", e)
       }
     }
 
@@ -107,7 +108,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ receta }, { status: 201 })
   } catch (error) {
-    console.error("POST /api/admin/recetas error:", error)
+    logger.error("POST /api/admin/recetas error:", error)
     return NextResponse.json({
       error: "Error al crear receta",
       detalle: error instanceof Error ? error.message : String(error),

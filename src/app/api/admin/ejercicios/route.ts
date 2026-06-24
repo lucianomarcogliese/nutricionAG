@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import type { CategoriaEjercicio } from "@/generated/prisma/enums"
+import { logger } from "@/lib/logger"
 
 const VALID_CATEGORIAS: CategoriaEjercicio[] = [
   "PECHO", "ESPALDA", "PIERNAS", "HOMBROS", "BRAZOS", "ABDOMEN", "CARDIO", "CUERPO_COMPLETO",
@@ -25,7 +26,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ ejercicios })
   } catch (error) {
-    console.error("GET /api/admin/ejercicios error:", error instanceof Error ? error.message : error)
+    logger.error("GET /api/admin/ejercicios error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al obtener ejercicios" }, { status: 500 })
   }
 }
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ejercicio }, { status: 201 })
   } catch (error) {
-    console.error("POST /api/admin/ejercicios error:", error instanceof Error ? error.message : error)
+    logger.error("POST /api/admin/ejercicios error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al crear ejercicio" }, { status: 500 })
   }
 }

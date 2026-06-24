@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
+import { logger } from "@/lib/logger"
 
 type Params = Promise<{ userId: string }>
 
@@ -41,7 +42,7 @@ export async function GET(_req: NextRequest, { params }: { params: Params }) {
 
     return NextResponse.json({ plan: plan ?? null })
   } catch (error) {
-    console.error("GET plan-entrenamiento error:", error instanceof Error ? error.message : error)
+    logger.error("GET plan-entrenamiento error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al obtener plan" }, { status: 500 })
   }
 }
@@ -130,7 +131,7 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
 
     return NextResponse.json({ plan }, { status: 201 })
   } catch (error) {
-    console.error("POST plan-entrenamiento error:", error instanceof Error ? error.message : error)
+    logger.error("POST plan-entrenamiento error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al guardar plan" }, { status: 500 })
   }
 }

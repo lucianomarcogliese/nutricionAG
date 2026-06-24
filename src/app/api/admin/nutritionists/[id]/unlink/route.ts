@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
+import { logger } from "@/lib/logger"
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -31,7 +32,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ nutritionist })
   } catch (error) {
-    console.error("DELETE /api/admin/nutritionists/[id]/unlink error:", error)
+    logger.error("DELETE /api/admin/nutritionists/[id]/unlink error:", error)
     return NextResponse.json({ error: "Error al desvincular usuario" }, { status: 500 })
   }
 }

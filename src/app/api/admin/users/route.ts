@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { Role } from "@/generated/prisma/client"
+import { logger } from "@/lib/logger"
 
 export async function GET(req: NextRequest) {
   try {
@@ -46,7 +47,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ users })
   } catch (error) {
-    console.error("GET /api/admin/users error:", error instanceof Error ? error.message : error)
+    logger.error("GET /api/admin/users error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al obtener usuarios" }, { status: 500 })
   }
 }

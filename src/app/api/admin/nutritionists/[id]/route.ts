@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
+import { logger } from "@/lib/logger"
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -45,7 +46,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     return NextResponse.json({ nutritionist })
   } catch (error) {
-    console.error("PATCH /api/admin/nutritionists/[id] error:", error)
+    logger.error("PATCH /api/admin/nutritionists/[id] error:", error)
     return NextResponse.json({ error: "Error al vincular usuario" }, { status: 500 })
   }
 }
@@ -84,7 +85,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     await prisma.nutritionist.delete({ where: { id } })
     return NextResponse.json({ ok: true })
   } catch (error) {
-    console.error("DELETE /api/admin/nutritionists/[id] error:", error)
+    logger.error("DELETE /api/admin/nutritionists/[id] error:", error)
     return NextResponse.json({ error: "Error al eliminar nutricionista" }, { status: 500 })
   }
 }

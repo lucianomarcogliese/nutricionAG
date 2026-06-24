@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server"
+﻿import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
+import { logger } from "@/lib/logger"
 
 type ConvAdminRow = {
   id: string
@@ -51,7 +52,7 @@ export async function GET() {
 
     return NextResponse.json({ conversaciones })
   } catch (error) {
-    console.error("GET /api/admin/mensajes error:", error)
+    logger.error("GET /api/admin/mensajes error:", error)
     return NextResponse.json({ error: "Error al obtener conversaciones" }, { status: 500 })
   }
 }

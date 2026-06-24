@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { appointmentSchema } from "@/lib/schemas/appointmentSchema"
 import { sendEmail } from "@/lib/email"
 import { confirmacionTurnoHtml, confirmacionTurnoSubject } from "@/emails/confirmacionTurno"
+import { logger } from "@/lib/logger"
 
 function formatFecha(date: Date): string {
   return date.toLocaleDateString("es-AR", {
@@ -62,7 +63,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ appointments })
   } catch (error) {
-    console.error("GET /api/admin/appointments error:", error instanceof Error ? error.message : error)
+    logger.error("GET /api/admin/appointments error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al obtener turnos" }, { status: 500 })
   }
 }
@@ -129,12 +130,12 @@ export async function POST(req: NextRequest) {
         )
       }
     } catch (emailError) {
-      console.error("POST /api/admin/appointments: error enviando email:", emailError instanceof Error ? emailError.message : emailError)
+      logger.error("POST /api/admin/appointments: error enviando email:", emailError instanceof Error ? emailError.message : emailError)
     }
 
     return NextResponse.json({ appointment }, { status: 201 })
   } catch (error) {
-    console.error("POST /api/admin/appointments error:", error instanceof Error ? error.message : error)
+    logger.error("POST /api/admin/appointments error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al crear el turno" }, { status: 500 })
   }
 }

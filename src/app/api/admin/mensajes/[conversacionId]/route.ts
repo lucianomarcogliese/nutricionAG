@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
 import { pusherServer } from "@/lib/pusher"
+import { logger } from "@/lib/logger"
 
 export async function POST(
   req: NextRequest,
@@ -49,7 +50,7 @@ export async function POST(
 
     return NextResponse.json({ mensaje: { ...mensaje, createdAt: mensaje.createdAt.toISOString() } }, { status: 201 })
   } catch (error) {
-    console.error("POST /api/admin/mensajes/[conversacionId] error:", error)
+    logger.error("POST /api/admin/mensajes/[conversacionId] error:", error)
     return NextResponse.json({ error: "Error al enviar mensaje" }, { status: 500 })
   }
 }

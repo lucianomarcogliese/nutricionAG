@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { TIPO_LABELS, ESTADO_COLORS } from '@/lib/admin-translations'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 interface AppointmentUser {
   id: string
@@ -71,6 +72,7 @@ function NutricionistaAvatar({ nutritionist }: { nutritionist: AppointmentNutrit
 }
 
 export function CalendarTab() {
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
@@ -154,7 +156,7 @@ export function CalendarTab() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('¿Eliminar este turno?')) return
+    setPendingDeleteId(null)
     const res = await fetch(`/api/admin/appointments/${id}`, { method: 'DELETE' })
     if (res.ok) setAppointments((prev) => prev.filter((a) => a.id !== id))
   }
@@ -358,9 +360,9 @@ export function CalendarTab() {
                       {ESTADOS.map((s) => <option key={s} value={s}>{s}</option>)}
                     </select>
                     <button
-                      onClick={() => handleDelete(a.id)}
+                      onClick={() => setPendingDeleteId(a.id)}
                       className="text-red-400 hover:text-red-600 transition-colors text-sm font-medium"
-                      title="Eliminar"
+                      aria-label="Eliminar turno"
                     >
                       ✕
                     </button>
@@ -482,6 +484,14 @@ export function CalendarTab() {
             </div>
           </div>
         </div>
+      )}
+
+      {pendingDeleteId && (
+        <ConfirmDialog
+          message="¿Eliminar este turno? Esta acción no se puede deshacer."
+          onConfirm={() => handleDelete(pendingDeleteId)}
+          onCancel={() => setPendingDeleteId(null)}
+        />
       )}
     </div>
   )

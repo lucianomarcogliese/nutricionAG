@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useToast } from '@/components/ui/ToastProvider'
 
 type Sex = 'MALE' | 'FEMALE' | 'OTHER'
 type Goal = 'LOSE_WEIGHT' | 'GAIN_MUSCLE' | 'MAINTAIN'
@@ -43,6 +44,7 @@ type Props = {
 }
 
 export function ProfileForm({ profile }: Props) {
+  const { toast } = useToast()
   const [fullName, setFullName] = useState(profile.fullName ?? '')
   const [age, setAge] = useState(profile.age?.toString() ?? '')
   const [weightKg, setWeightKg] = useState(profile.weightKg?.toString() ?? '')
@@ -55,13 +57,6 @@ export function ProfileForm({ profile }: Props) {
   )
 
   const [loading, setLoading] = useState(false)
-  const [banner, setBanner] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
-
-  useEffect(() => {
-    if (!banner) return
-    const timer = setTimeout(() => setBanner(null), 3000)
-    return () => clearTimeout(timer)
-  }, [banner])
 
   function toggleDiet(value: string) {
     setDietaryRestrictions((prev) =>
@@ -72,7 +67,6 @@ export function ProfileForm({ profile }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    setBanner(null)
 
     try {
       const res = await fetch('/api/profile', {
@@ -96,12 +90,12 @@ export function ProfileForm({ profile }: Props) {
           data && typeof data === 'object' && 'error' in data && typeof (data as { error: unknown }).error === 'string'
             ? (data as { error: string }).error
             : 'Error al guardar'
-        setBanner({ type: 'error', message })
+        toast({ message, type: 'error' })
       } else {
-        setBanner({ type: 'success', message: 'Perfil actualizado correctamente' })
+        toast({ message: 'Perfil actualizado correctamente', type: 'success' })
       }
     } catch {
-      setBanner({ type: 'error', message: 'Error de conexión' })
+      toast({ message: 'Error de conexión', type: 'error' })
     } finally {
       setLoading(false)
     }
@@ -111,19 +105,7 @@ export function ProfileForm({ profile }: Props) {
     <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
       <h2 className="text-lg font-semibold text-gray-900 mb-6">Editar perfil</h2>
 
-      {banner && (
-        <div
-          className={
-            banner.type === 'success'
-              ? 'bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg px-4 py-3 mb-4 text-sm'
-              : 'bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 mb-4 text-sm'
-          }
-        >
-          {banner.message}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="sm:col-span-2">
           <label className={labelClass}>Nombre completo</label>
           <input

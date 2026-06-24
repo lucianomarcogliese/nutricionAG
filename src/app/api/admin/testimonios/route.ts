@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import cloudinary from "@/lib/cloudinary"
+import { logger } from "@/lib/logger"
 
 async function uploadToCloudinary(file: File): Promise<{ url: string; publicId: string }> {
   const buffer = Buffer.from(await file.arrayBuffer())
@@ -28,7 +29,7 @@ export async function GET() {
     })
     return NextResponse.json({ testimonios })
   } catch (error) {
-    console.error("GET /api/admin/testimonios error:", error instanceof Error ? error.message : error)
+    logger.error("GET /api/admin/testimonios error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al obtener testimonios" }, { status: 500 })
   }
 }
@@ -78,7 +79,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ testimonio }, { status: 201 })
   } catch (error) {
-    console.error("POST /api/admin/testimonios error:", error instanceof Error ? error.message : error)
+    logger.error("POST /api/admin/testimonios error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al crear testimonio" }, { status: 500 })
   }
 }

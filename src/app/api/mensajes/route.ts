@@ -1,9 +1,11 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
 import { getPermisos } from "@/lib/permisos"
+import { getProfileId } from "@/lib/profile-utils"
+import { logger } from "@/lib/logger"
 
 type ConvRow = {
   id: string
@@ -26,11 +28,8 @@ export async function GET() {
     const permisos = await getPermisos(session.user.id)
     if (!permisos.verMensajesPrivados) return NextResponse.json({ error: "REQUIERE_PRO" }, { status: 403 })
 
-    const profileRows = await prisma.$queryRaw<{ id: string }[]>(
-      Prisma.sql`SELECT id FROM "Profile" WHERE "userId" = ${session.user.id} LIMIT 1`
-    )
-    if (!profileRows[0]) return NextResponse.json({ conversaciones: [] })
-    const profileId = profileRows[0].id
+    const profileId = await getProfileId(session.user.id)
+    if (!profileId) return NextResponse.json({ conversaciones: [] })
 
     const rows = await prisma.$queryRaw<ConvRow[]>(
       Prisma.sql`
@@ -57,7 +56,7 @@ export async function GET() {
 
     return NextResponse.json({ conversaciones })
   } catch (error) {
-    console.error("GET /api/mensajes error:", error)
+    logger.error("GET /api/mensajes error:", error)
     return NextResponse.json({ error: "Error al obtener conversaciones" }, { status: 500 })
   }
 }
@@ -73,11 +72,8 @@ export async function POST(req: NextRequest) {
     const { nutricionistaId } = await req.json()
     if (!nutricionistaId) return NextResponse.json({ error: "nutricionistaId requerido" }, { status: 400 })
 
-    const profileRows = await prisma.$queryRaw<{ id: string }[]>(
-      Prisma.sql`SELECT id FROM "Profile" WHERE "userId" = ${session.user.id} LIMIT 1`
-    )
-    if (!profileRows[0]) return NextResponse.json({ error: "Perfil no encontrado" }, { status: 404 })
-    const profileId = profileRows[0].id
+    const profileId = await getProfileId(session.user.id)
+    if (!profileId) return NextResponse.json({ error: "Perfil no encontrado" }, { status: 404 })
 
     const existing = await prisma.$queryRaw<{ id: string }[]>(
       Prisma.sql`SELECT id FROM "Conversacion" WHERE "profileId" = ${profileId} AND "nutricionistaId" = ${nutricionistaId} LIMIT 1`
@@ -96,7 +92,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ conversacion: conv }, { status: 201 })
   } catch (error) {
-    console.error("POST /api/mensajes error:", error)
+    logger.error("POST /api/mensajes error:", error)
     return NextResponse.json({ error: "Error al crear conversación" }, { status: 500 })
   }
 }

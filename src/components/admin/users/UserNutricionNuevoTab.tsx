@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 type ObjetivoPlan = 'DEFICIT_CALORICO' | 'GANANCIA_MUSCULAR' | 'MANTENIMIENTO' | 'VEGETARIANO' | 'SIN_TACC' | 'PERSONALIZADO'
 
@@ -70,6 +71,7 @@ const inputCls = 'border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-
 const textareaCls = 'border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-sm resize-none'
 
 export function UserNutricionNuevoTab({ userId }: Props) {
+  const [confirmDeletePlan, setConfirmDeletePlan] = useState(false)
   const [plan, setPlan] = useState<PlanNutricional | null | 'loading'>('loading')
   const [showAssignModal, setShowAssignModal] = useState(false)
   const [templates, setTemplates] = useState<TemplateSummary[]>([])
@@ -144,7 +146,7 @@ export function UserNutricionNuevoTab({ userId }: Props) {
 
   async function handleDeletePlan() {
     if (!plan || plan === 'loading') return
-    if (!confirm('¿Eliminar el plan nutricional de este paciente?')) return
+    setConfirmDeletePlan(false)
     await fetch(`/api/admin/planes-nutricionales/${plan.id}`, { method: 'DELETE' })
     setPlan(null)
   }
@@ -322,7 +324,7 @@ export function UserNutricionNuevoTab({ userId }: Props) {
           <button onClick={openAssignModal} className="text-xs text-emerald-700 font-medium border border-emerald-300 hover:bg-emerald-100 rounded-lg px-2.5 py-1.5 transition-colors">
             Cambiar template
           </button>
-          <button onClick={handleDeletePlan} className="text-xs text-red-400 hover:text-red-600 font-medium">Eliminar</button>
+          <button onClick={() => setConfirmDeletePlan(true)} className="text-xs text-red-400 hover:text-red-600 font-medium">Eliminar</button>
         </div>
       </div>
 
@@ -424,6 +426,14 @@ export function UserNutricionNuevoTab({ userId }: Props) {
           onChangeNota={setNotaNutricionista}
           onAssign={handleAssign}
           onClose={() => { setShowAssignModal(false); setAssignError('') }}
+        />
+      )}
+
+      {confirmDeletePlan && (
+        <ConfirmDialog
+          message="¿Eliminar el plan nutricional de este paciente? Esta acción no se puede deshacer."
+          onConfirm={handleDeletePlan}
+          onCancel={() => setConfirmDeletePlan(false)}
         />
       )}
     </div>

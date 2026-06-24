@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { Role } from "@/generated/prisma/client"
+import { logger } from "@/lib/logger"
 
 const ALLOWED_ROLES = Object.values(Role)
 
@@ -35,7 +36,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     return NextResponse.json({ user: updated })
   } catch (error) {
-    console.error("PATCH /api/admin/users/[id]/role error:", error)
+    logger.error("PATCH /api/admin/users/[id]/role error:", error)
     return NextResponse.json({ error: "Error al cambiar rol" }, { status: 500 })
   }
 }

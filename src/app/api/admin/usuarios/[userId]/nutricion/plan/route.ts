@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
+import { logger } from "@/lib/logger"
 
 export async function POST(
   req: NextRequest,
@@ -50,7 +51,7 @@ export async function POST(
 
     return NextResponse.json({ plan }, { status: 201 })
   } catch (error) {
-    console.error("POST nutricion/plan error:", error instanceof Error ? error.message : error)
+    logger.error("POST nutricion/plan error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al crear plan nutricional" }, { status: 500 })
   }
 }

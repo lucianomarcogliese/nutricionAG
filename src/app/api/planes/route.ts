@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server"
+﻿import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { ensurePlanSeed } from "@/lib/plan-seed"
+import { logger } from "@/lib/logger"
 
 export async function GET() {
   try {
@@ -13,7 +14,7 @@ export async function GET() {
 
     return NextResponse.json({ planes })
   } catch (error) {
-    console.error("GET /api/planes error:", error instanceof Error ? error.message : error)
+    logger.error("GET /api/planes error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al obtener planes" }, { status: 500 })
   }
 }

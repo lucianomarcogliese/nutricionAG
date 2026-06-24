@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { pusherServer } from "@/lib/pusher"
+import { logger } from "@/lib/logger"
 
 export async function POST(req: NextRequest) {
   try {
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
     const authResponse = pusherServer.authorizeChannel(socketId, channelName)
     return NextResponse.json(authResponse)
   } catch (error) {
-    console.error("POST /api/pusher/auth error:", error)
+    logger.error("POST /api/pusher/auth error:", error)
     return NextResponse.json({ error: "Auth failed" }, { status: 500 })
   }
 }

@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
+import { logger } from "@/lib/logger"
 
 type Params = { params: Promise<{ id: string; comidaId: string; grupoId: string }> }
 
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     return NextResponse.json({ opcion }, { status: 201 })
   } catch (error) {
-    console.error("POST opciones error:", error instanceof Error ? error.message : error)
+    logger.error("POST opciones error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al agregar opción" }, { status: 500 })
   }
 }
@@ -58,7 +59,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
     return NextResponse.json({ opcion: updated })
   } catch (error) {
-    console.error("PUT opciones error:", error instanceof Error ? error.message : error)
+    logger.error("PUT opciones error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al editar opción" }, { status: 500 })
   }
 }
@@ -81,7 +82,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     await prisma.planOpcion.delete({ where: { id: body.opcionId } })
     return NextResponse.json({ ok: true })
   } catch (error) {
-    console.error("DELETE opciones error:", error instanceof Error ? error.message : error)
+    logger.error("DELETE opciones error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al eliminar opción" }, { status: 500 })
   }
 }

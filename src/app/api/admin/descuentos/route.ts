@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
 import cloudinary from "@/lib/cloudinary"
+import { logger } from "@/lib/logger"
 
 function newId() {
   return `cm${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ descuentos, total, page, totalPages: Math.ceil(total / limit) })
   } catch (error) {
-    console.error("GET /api/admin/descuentos error:", error)
+    logger.error("GET /api/admin/descuentos error:", error)
     return NextResponse.json({ error: "Error al obtener descuentos" }, { status: 500 })
   }
 }
@@ -66,11 +67,11 @@ export async function POST(req: NextRequest) {
 
     const logoFile = fd.get("logo") as File | null
     if (logoFile && logoFile.size > 0) {
-      try { logoUrl = await uploadImg(logoFile) } catch (e) { console.error("Logo upload error:", e) }
+      try { logoUrl = await uploadImg(logoFile) } catch (e) { logger.error("Logo upload error:", e) }
     }
     const imgFile = fd.get("imagen") as File | null
     if (imgFile && imgFile.size > 0) {
-      try { imagenUrl = await uploadImg(imgFile) } catch (e) { console.error("Imagen upload error:", e) }
+      try { imagenUrl = await uploadImg(imgFile) } catch (e) { logger.error("Imagen upload error:", e) }
     }
 
     const [{ count }] = await prisma.$queryRaw<[{ count: bigint }]>(
@@ -95,7 +96,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ descuento }, { status: 201 })
   } catch (error) {
-    console.error("POST /api/admin/descuentos error:", error)
+    logger.error("POST /api/admin/descuentos error:", error)
     return NextResponse.json({
       error: "Error al crear descuento",
       detalle: error instanceof Error ? error.message : String(error),

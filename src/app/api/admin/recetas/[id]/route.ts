@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
 import cloudinary from "@/lib/cloudinary"
+import { logger } from "@/lib/logger"
 
 function extractPublicId(url: string): string {
   const match = url.match(/upload\/(?:v\d+\/)?(.+)\.[^.]+$/)
@@ -82,7 +83,7 @@ export async function PATCH(
             const pid = extractPublicId(rec.imagenUrl)
             if (pid) await cloudinary.uploader.destroy(pid).catch(() => {})
           }
-        } catch (e) { console.error("Cloudinary upload error:", e) }
+        } catch (e) { logger.error("Cloudinary upload error:", e) }
       }
     } else {
       const body = await req.json()
@@ -111,7 +112,7 @@ export async function PATCH(
 
     return NextResponse.json({ receta: updated })
   } catch (error) {
-    console.error("PATCH /api/admin/recetas/[id] error:", error)
+    logger.error("PATCH /api/admin/recetas/[id] error:", error)
     return NextResponse.json({ error: "Error al actualizar receta" }, { status: 500 })
   }
 }
@@ -140,7 +141,7 @@ export async function DELETE(
     await prisma.$executeRaw(Prisma.sql`DELETE FROM "Receta" WHERE id=${id}`)
     return NextResponse.json({ ok: true })
   } catch (error) {
-    console.error("DELETE /api/admin/recetas/[id] error:", error)
+    logger.error("DELETE /api/admin/recetas/[id] error:", error)
     return NextResponse.json({ error: "Error al eliminar receta" }, { status: 500 })
   }
 }

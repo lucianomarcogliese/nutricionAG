@@ -1,8 +1,10 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
+import { getProfileId } from "@/lib/profile-utils"
+import { logger } from "@/lib/logger"
 
 export async function DELETE(
   _req: NextRequest,
@@ -19,10 +21,7 @@ export async function DELETE(
     )
     if (!rows[0]) return NextResponse.json({ error: "No encontrado" }, { status: 404 })
 
-    const profileRows = await prisma.$queryRaw<{ id: string }[]>(
-      Prisma.sql`SELECT id FROM "Profile" WHERE "userId" = ${session.user.id} LIMIT 1`
-    )
-    const profileId = profileRows[0]?.id
+    const profileId = await getProfileId(session.user.id)
 
     const isOwner = profileId === rows[0].profileId
     const isAdmin = session.user.role === "ADMIN"
@@ -34,7 +33,7 @@ export async function DELETE(
     await prisma.$executeRaw(Prisma.sql`DELETE FROM "ChatMessage" WHERE id = ${id}`)
     return NextResponse.json({ ok: true })
   } catch (error) {
-    console.error("DELETE /api/chat/mensajes/[id] error:", error)
+    logger.error("DELETE /api/chat/mensajes/[id] error:", error)
     return NextResponse.json({ error: "Error al eliminar mensaje" }, { status: 500 })
   }
 }

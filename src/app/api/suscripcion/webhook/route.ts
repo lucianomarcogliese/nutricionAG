@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { MercadoPagoConfig, Payment } from "mercadopago"
 import crypto from "crypto"
 import { sendEmail } from "@/lib/email"
 import { confirmacionPagoHtml, confirmacionPagoSubject } from "@/emails/confirmacionPago"
+import { logger } from "@/lib/logger"
 
 const mpClient = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest) {
     if (!paymentId) return NextResponse.json({ ok: true })
 
     if (!verifyMPSignature(req, String(paymentId))) {
-      console.error("Webhook MP: firma inválida")
+      logger.error("Webhook MP: firma inválida")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -76,7 +77,7 @@ export async function POST(req: NextRequest) {
     const planNombre = metadata?.plan_nombre
 
     if (!userId || !planNombre) {
-      console.error("Webhook MP: metadata incompleta", metadata)
+      logger.error("Webhook MP: metadata incompleta", metadata)
       return NextResponse.json({ ok: true })
     }
 
@@ -86,7 +87,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (!profile) {
-      console.error("Webhook MP: perfil no encontrado para userId", userId)
+      logger.error("Webhook MP: perfil no encontrado para userId", userId)
       return NextResponse.json({ ok: true })
     }
 
@@ -134,12 +135,12 @@ export async function POST(req: NextRequest) {
         )
       }
     } catch (emailError) {
-      console.error("Webhook MP: error enviando email de confirmación:", emailError instanceof Error ? emailError.message : emailError)
+      logger.error("Webhook MP: error enviando email de confirmación:", emailError instanceof Error ? emailError.message : emailError)
     }
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    console.error("POST /api/suscripcion/webhook error:", error instanceof Error ? error.message : error)
+    logger.error("POST /api/suscripcion/webhook error:", error instanceof Error ? error.message : error)
     // Igual retornamos 200 para que MP no reintente indefinidamente
     return NextResponse.json({ ok: true })
   }

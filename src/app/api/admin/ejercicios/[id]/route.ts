@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import type { CategoriaEjercicio } from "@/generated/prisma/enums"
+import { logger } from "@/lib/logger"
 
 const VALID_CATEGORIAS: CategoriaEjercicio[] = [
   "PECHO", "ESPALDA", "PIERNAS", "HOMBROS", "BRAZOS", "ABDOMEN", "CARDIO", "CUERPO_COMPLETO",
@@ -34,7 +35,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const ejercicio = await prisma.ejercicio.update({ where: { id }, data })
     return NextResponse.json({ ejercicio })
   } catch (error) {
-    console.error("PATCH /api/admin/ejercicios/[id] error:", error instanceof Error ? error.message : error)
+    logger.error("PATCH /api/admin/ejercicios/[id] error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al actualizar ejercicio" }, { status: 500 })
   }
 }
@@ -51,7 +52,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     await prisma.ejercicio.delete({ where: { id } })
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("DELETE /api/admin/ejercicios/[id] error:", error instanceof Error ? error.message : error)
+    logger.error("DELETE /api/admin/ejercicios/[id] error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al eliminar ejercicio" }, { status: 500 })
   }
 }

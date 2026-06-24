@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server"
+﻿import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
+import { logger } from "@/lib/logger"
 
 async function getPlanUsuario(userId: string): Promise<string> {
   const rows = await prisma.$queryRaw<{ plan: string; estado: string; fechaVencimiento: Date | null }[]>(
@@ -37,7 +38,7 @@ export async function GET() {
 
     return NextResponse.json({ categorias: rows.map((r) => r.categoria) })
   } catch (error) {
-    console.error("GET /api/descuentos/categorias error:", error)
+    logger.error("GET /api/descuentos/categorias error:", error)
     return NextResponse.json({ error: "Error al obtener categorías" }, { status: 500 })
   }
 }

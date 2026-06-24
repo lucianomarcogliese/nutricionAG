@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
+import { logger } from "@/lib/logger"
 
 function newId() {
   return `cm${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`
@@ -41,7 +42,7 @@ export async function POST(
     )
     return NextResponse.json({ isFavorito: true })
   } catch (error) {
-    console.error("POST favorito error:", error)
+    logger.error("POST favorito error:", error)
     return NextResponse.json({ error: "Error al actualizar favorito" }, { status: 500 })
   }
 }

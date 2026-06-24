@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import type { AppointmentStatus } from "@/generated/prisma/client"
 import { sendEmail } from "@/lib/email"
 import { cancelacionTurnoHtml, cancelacionTurnoSubject } from "@/emails/cancelacionTurno"
+import { logger } from "@/lib/logger"
 
 function formatFecha(date: Date): string {
   return date.toLocaleDateString("es-AR", {
@@ -68,13 +69,13 @@ export async function PATCH(
           })
         )
       } catch (emailError) {
-        console.error("PATCH /api/admin/appointments/[id]: error enviando email de cancelación:", emailError instanceof Error ? emailError.message : emailError)
+        logger.error("PATCH /api/admin/appointments/[id]: error enviando email de cancelación:", emailError instanceof Error ? emailError.message : emailError)
       }
     }
 
     return NextResponse.json({ appointment })
   } catch (error) {
-    console.error("PATCH /api/admin/appointments/[id] error:", error instanceof Error ? error.message : error)
+    logger.error("PATCH /api/admin/appointments/[id] error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al actualizar el turno" }, { status: 500 })
   }
 }
@@ -100,7 +101,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("DELETE /api/admin/appointments/[id] error:", error instanceof Error ? error.message : error)
+    logger.error("DELETE /api/admin/appointments/[id] error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al eliminar el turno" }, { status: 500 })
   }
 }

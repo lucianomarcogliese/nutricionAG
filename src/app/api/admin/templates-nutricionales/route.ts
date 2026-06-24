@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import type { ObjetivoPlan } from "@/generated/prisma/enums"
+import { logger } from "@/lib/logger"
 
 const VALID_OBJETIVOS: ObjetivoPlan[] = [
   "DEFICIT_CALORICO", "GANANCIA_MUSCULAR", "MANTENIMIENTO", "VEGETARIANO", "SIN_TACC", "PERSONALIZADO",
@@ -39,7 +40,7 @@ export async function GET() {
 
     return NextResponse.json({ templates: result })
   } catch (error) {
-    console.error("GET /api/admin/templates-nutricionales error:", error instanceof Error ? error.message : error)
+    logger.error("GET /api/admin/templates-nutricionales error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al obtener templates" }, { status: 500 })
   }
 }
@@ -68,7 +69,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ template: { ...template, pacientesCount: 0 } }, { status: 201 })
   } catch (error) {
-    console.error("POST /api/admin/templates-nutricionales error:", error instanceof Error ? error.message : error)
+    logger.error("POST /api/admin/templates-nutricionales error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al crear template" }, { status: 500 })
   }
 }

@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
+import { logger } from "@/lib/logger"
 
 async function getProfile(userId: string) {
   const profile = await prisma.profile.findUnique({
@@ -33,7 +34,7 @@ export async function GET(
 
     return NextResponse.json({ rutinas })
   } catch (error) {
-    console.error("GET rutinas error:", error instanceof Error ? error.message : error)
+    logger.error("GET rutinas error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al obtener rutinas" }, { status: 500 })
   }
 }
@@ -64,7 +65,7 @@ export async function POST(
 
     return NextResponse.json({ rutina }, { status: 201 })
   } catch (error) {
-    console.error("POST rutinas error:", error instanceof Error ? error.message : error)
+    logger.error("POST rutinas error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al crear rutina" }, { status: 500 })
   }
 }

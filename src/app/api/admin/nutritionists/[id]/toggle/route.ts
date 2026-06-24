@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
+import { logger } from "@/lib/logger"
 
 export async function PATCH(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -22,7 +23,7 @@ export async function PATCH(_req: NextRequest, { params }: { params: Promise<{ i
 
     return NextResponse.json({ nutritionist: updated })
   } catch (error) {
-    console.error("PATCH /api/admin/nutritionists/[id]/toggle error:", error)
+    logger.error("PATCH /api/admin/nutritionists/[id]/toggle error:", error)
     return NextResponse.json({ error: "Error al cambiar estado" }, { status: 500 })
   }
 }

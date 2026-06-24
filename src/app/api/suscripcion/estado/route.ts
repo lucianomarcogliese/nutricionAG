@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server"
+﻿import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { ensurePlanSeed } from "@/lib/plan-seed"
+import { logger } from "@/lib/logger"
 
 export async function GET() {
   try {
@@ -42,7 +43,7 @@ export async function GET() {
       planConfig,
     })
   } catch (error) {
-    console.error("GET /api/suscripcion/estado error:", error instanceof Error ? error.message : error)
+    logger.error("GET /api/suscripcion/estado error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al obtener estado de suscripción" }, { status: 500 })
   }
 }

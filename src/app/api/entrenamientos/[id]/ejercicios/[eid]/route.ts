@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
+import { logger } from "@/lib/logger"
 
 async function getRoutineForUser(routineId: string, userId: string) {
   const profile = await prisma.profile.findUnique({
@@ -46,7 +47,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("DELETE /api/entrenamientos/[id]/ejercicios/[eid] error:", error instanceof Error ? error.message : error)
+    logger.error("DELETE /api/entrenamientos/[id]/ejercicios/[eid] error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al eliminar el ejercicio" }, { status: 500 })
   }
 }

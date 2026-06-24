@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { calcularTodo } from "@/lib/antropometria-calculos"
+import { logger } from "@/lib/logger"
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   try {
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
 
     return NextResponse.json({ antropometrias })
   } catch (error) {
-    console.error("GET /api/admin/antropometria/[userId] error:", error)
+    logger.error("GET /api/admin/antropometria/[userId] error:", error)
     return NextResponse.json({ error: "Error al obtener antropometrías" }, { status: 500 })
   }
 }
@@ -114,8 +115,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ use
 
     const calculados = calcularTodo(calcInput)
 
-    console.log("[POST antropometria] profileId:", profile.id, "pesoKg:", pesoKg, "tallaCm:", tallaCm)
-    console.log("[POST antropometria] calculados:", JSON.stringify(calculados))
+    logger.info("[POST antropometria] profileId:", profile.id, "pesoKg:", pesoKg, "tallaCm:", tallaCm)
+    logger.info("[POST antropometria] calculados:", JSON.stringify(calculados))
 
     const f = (v: unknown) => (v !== undefined && v !== "" && v !== null ? parseFloat(String(v)) : null)
 
@@ -173,8 +174,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ use
 
     return NextResponse.json({ antropometria }, { status: 201 })
   } catch (error) {
-    console.error("[POST antropometria] message:", error instanceof Error ? error.message : String(error))
-    console.error("[POST antropometria] stack:", error instanceof Error ? error.stack : "")
+    logger.error("[POST antropometria] message:", error instanceof Error ? error.message : String(error))
+    logger.error("[POST antropometria] stack:", error instanceof Error ? error.stack : "")
     return NextResponse.json(
       { error: "Error al guardar antropometría", detail: String(error) },
       { status: 500 }

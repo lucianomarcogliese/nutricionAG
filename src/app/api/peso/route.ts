@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
+import { logger } from "@/lib/logger"
 
 type WeightRow = { id: string; profileId: string; weightKg: number; fecha: Date; notas: string | null }
 
@@ -25,7 +26,7 @@ export async function GET() {
 
     return NextResponse.json({ entries })
   } catch (error) {
-    console.error("GET /api/peso error:", error instanceof Error ? error.message : error)
+    logger.error("GET /api/peso error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al obtener registros" }, { status: 500 })
   }
 }
@@ -68,7 +69,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ entry }, { status: 201 })
   } catch (error) {
-    console.error("POST /api/peso error:", error instanceof Error ? error.message : error)
+    logger.error("POST /api/peso error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al guardar registro" }, { status: 500 })
   }
 }

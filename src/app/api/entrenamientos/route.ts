@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { getPermisos } from "@/lib/permisos"
+import { logger } from "@/lib/logger"
 
 export async function GET(_req: NextRequest) {
   try {
@@ -27,7 +28,7 @@ export async function GET(_req: NextRequest) {
 
     return NextResponse.json({ routines })
   } catch (error) {
-    console.error("GET /api/entrenamientos error:", error instanceof Error ? error.message : error)
+    logger.error("GET /api/entrenamientos error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al obtener rutinas" }, { status: 500 })
   }
 }
@@ -84,9 +85,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ routine }, { status: 201 })
   } catch (error) {
-    console.error("POST /api/entrenamientos error completo:", error)
-    console.error("message:", error instanceof Error ? error.message : String(error))
-    console.error("stack:", error instanceof Error ? error.stack : "no stack")
+    logger.error("POST /api/entrenamientos error completo:", error)
+    logger.error("message:", error instanceof Error ? error.message : String(error))
+    logger.error("stack:", error instanceof Error ? error.stack : "no stack")
     return NextResponse.json({ error: "Error al crear la rutina", detail: String(error) }, { status: 500 })
   }
 }

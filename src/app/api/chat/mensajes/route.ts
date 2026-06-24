@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
 import { getPermisos } from "@/lib/permisos"
 import { pusherServer } from "@/lib/pusher"
+import { logger } from "@/lib/logger"
 
 type MensajeRow = {
   id: string
@@ -14,7 +15,9 @@ type MensajeRow = {
   fullName: string | null
 }
 
-export async function GET() {
+const PAGE_SIZE = 50
+
+export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -22,19 +25,43 @@ export async function GET() {
     const permisos = await getPermisos(session.user.id)
     if (!permisos.verChat) return NextResponse.json({ error: "REQUIERE_PRO" }, { status: 403 })
 
-    const mensajes = await prisma.$queryRaw<MensajeRow[]>(
-      Prisma.sql`
-        SELECT m.id, m.contenido, m."profileId", m."createdAt", p."fullName"
-        FROM "ChatMessage" m
-        JOIN "Profile" p ON p.id = m."profileId"
-        ORDER BY m."createdAt" ASC
-        LIMIT 50
-      `
-    )
+    const before = new URL(req.url).searchParams.get("before")
+    let beforeDate: Date | null = null
+    if (before) {
+      beforeDate = new Date(before)
+      if (isNaN(beforeDate.getTime())) {
+        return NextResponse.json({ error: "Parámetro before inválido" }, { status: 400 })
+      }
+    }
 
-    return NextResponse.json({ mensajes })
+    const rows = beforeDate
+      ? await prisma.$queryRaw<MensajeRow[]>(
+          Prisma.sql`
+            SELECT m.id, m.contenido, m."profileId", m."createdAt", p."fullName"
+            FROM "ChatMessage" m
+            JOIN "Profile" p ON p.id = m."profileId"
+            WHERE m."createdAt" < ${beforeDate}
+            ORDER BY m."createdAt" DESC
+            LIMIT ${PAGE_SIZE + 1}
+          `
+        )
+      : await prisma.$queryRaw<MensajeRow[]>(
+          Prisma.sql`
+            SELECT m.id, m.contenido, m."profileId", m."createdAt", p."fullName"
+            FROM "ChatMessage" m
+            JOIN "Profile" p ON p.id = m."profileId"
+            ORDER BY m."createdAt" DESC
+            LIMIT ${PAGE_SIZE + 1}
+          `
+        )
+
+    const hasMore = rows.length > PAGE_SIZE
+    if (hasMore) rows.pop()
+    rows.reverse()
+
+    return NextResponse.json({ mensajes: rows, hasMore })
   } catch (error) {
-    console.error("GET /api/chat/mensajes error:", error)
+    logger.error("GET /api/chat/mensajes error:", error)
     return NextResponse.json({ error: "Error al obtener mensajes" }, { status: 500 })
   }
 }
@@ -80,7 +107,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ mensaje: { ...mensaje, fullName: profile.fullName } }, { status: 201 })
   } catch (error) {
-    console.error("POST /api/chat/mensajes error:", error)
+    logger.error("POST /api/chat/mensajes error:", error)
     return NextResponse.json({ error: "Error al enviar mensaje" }, { status: 500 })
   }
 }

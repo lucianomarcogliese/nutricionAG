@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { hash } from "bcryptjs"
 import { prisma } from "@/lib/prisma"
 import { registerSchema } from "@/lib/schemas/registerSchema"
 import { sendEmail } from "@/lib/email"
 import { bienvenidaHtml, bienvenidaSubject } from "@/emails/bienvenida"
+import { logger } from "@/lib/logger"
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,12 +33,12 @@ export async function POST(req: NextRequest) {
     try {
       await sendEmail(email, bienvenidaSubject, bienvenidaHtml({ nombre: name }))
     } catch (emailError) {
-      console.error("POST /api/auth/register: error enviando email de bienvenida:", emailError instanceof Error ? emailError.message : emailError)
+      logger.error("POST /api/auth/register: error enviando email de bienvenida:", emailError instanceof Error ? emailError.message : emailError)
     }
 
     return NextResponse.json({ ok: true }, { status: 201 })
   } catch (error) {
-    console.error("POST /api/auth/register error:", error instanceof Error ? error.message : error)
+    logger.error("POST /api/auth/register error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al crear la cuenta" }, { status: 500 })
   }
 }

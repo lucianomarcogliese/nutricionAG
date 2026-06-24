@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
+import { logger } from "@/lib/logger"
 
 type Params = { params: Promise<{ userId: string }> }
 
@@ -38,7 +39,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
     return NextResponse.json({ plan: plan ?? null, profileId: profile.id })
   } catch (error) {
-    console.error("GET /api/admin/usuarios/[userId]/plan-nutricional error:", error instanceof Error ? error.message : error)
+    logger.error("GET /api/admin/usuarios/[userId]/plan-nutricional error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al obtener plan" }, { status: 500 })
   }
 }

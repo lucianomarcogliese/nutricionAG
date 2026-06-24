@@ -1,9 +1,10 @@
-import NextAuth, { type NextAuthOptions } from "next-auth"
+﻿import NextAuth, { type NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { compare } from "bcryptjs"
 import { prisma } from "@/lib/prisma"
+import { logger } from "@/lib/logger"
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions["adapter"],
@@ -35,7 +36,7 @@ export const authOptions: NextAuthOptions = {
 
           return { id: user.id, name: user.name, email: user.email, image: user.image }
         } catch (err) {
-          console.error("[authorize] error:", err)
+          logger.error("[authorize] error:", err)
           return null
         }
       },
@@ -103,7 +104,7 @@ export const authOptions: NextAuthOptions = {
           token.roleCheckedAt = Date.now()
         }
       } catch (err) {
-        console.error("[jwt callback] error:", err)
+        logger.error("[jwt callback] error:", err)
       }
 
       return token

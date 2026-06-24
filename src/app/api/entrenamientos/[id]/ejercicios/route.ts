@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
+import { logger } from "@/lib/logger"
 
 async function getRoutineForUser(routineId: string, userId: string) {
   const profile = await prisma.profile.findUnique({
@@ -41,7 +42,7 @@ export async function GET(
 
     return NextResponse.json({ exercises })
   } catch (error) {
-    console.error("GET /api/entrenamientos/[id]/ejercicios error:", error instanceof Error ? error.message : error)
+    logger.error("GET /api/entrenamientos/[id]/ejercicios error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al obtener ejercicios" }, { status: 500 })
   }
 }
@@ -98,7 +99,7 @@ export async function POST(
 
     return NextResponse.json({ exercise }, { status: 201 })
   } catch (error) {
-    console.error("POST /api/entrenamientos/[id]/ejercicios error:", error instanceof Error ? error.message : error)
+    logger.error("POST /api/entrenamientos/[id]/ejercicios error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al crear el ejercicio" }, { status: 500 })
   }
 }

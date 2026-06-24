@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
+import { logger } from "@/lib/logger"
 
 export async function GET(
   _req: NextRequest,
@@ -30,7 +31,7 @@ export async function GET(
 
     return NextResponse.json({ plan: plan ?? null })
   } catch (error) {
-    console.error("GET nutricion error:", error instanceof Error ? error.message : error)
+    logger.error("GET nutricion error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al obtener plan nutricional" }, { status: 500 })
   }
 }

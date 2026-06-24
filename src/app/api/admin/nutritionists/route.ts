@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { ensureNutritionistSeed } from "@/lib/nutritionist-seed"
+import { logger } from "@/lib/logger"
 
 export async function GET() {
   try {
@@ -24,7 +25,7 @@ export async function GET() {
 
     return NextResponse.json({ nutritionists })
   } catch (error) {
-    console.error("GET /api/admin/nutritionists error:", error instanceof Error ? error.message : error)
+    logger.error("GET /api/admin/nutritionists error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al obtener nutricionistas" }, { status: 500 })
   }
 }
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ nutritionist }, { status: 201 })
   } catch (error) {
-    console.error("POST /api/admin/nutritionists error:", error)
+    logger.error("POST /api/admin/nutritionists error:", error)
     return NextResponse.json({ error: "Error al crear nutricionista" }, { status: 500 })
   }
 }

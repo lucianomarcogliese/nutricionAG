@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
+import { logger } from "@/lib/logger"
 
 type DescuentoRow = {
   id: string; titulo: string; descripcion: string; marca: string
@@ -58,7 +59,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ descuentos, plan })
   } catch (error) {
-    console.error("GET /api/descuentos error:", error)
+    logger.error("GET /api/descuentos error:", error)
     return NextResponse.json({ error: "Error al obtener descuentos" }, { status: 500 })
   }
 }

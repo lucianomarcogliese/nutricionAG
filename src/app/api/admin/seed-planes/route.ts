@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server"
+﻿import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { seedPlanes } from "@/lib/plan-seed"
+import { logger } from "@/lib/logger"
 
 // Llamar una vez para inicializar los nuevos permisos en DB:
 //   POST /api/admin/seed-planes
@@ -15,7 +16,7 @@ export async function POST() {
     await seedPlanes()
     return NextResponse.json({ ok: true, message: "Planes actualizados correctamente" })
   } catch (error) {
-    console.error("POST /api/admin/seed-planes error:", error)
+    logger.error("POST /api/admin/seed-planes error:", error)
     return NextResponse.json({ error: "Error al actualizar planes" }, { status: 500 })
   }
 }

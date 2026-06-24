@@ -6,6 +6,7 @@ import type { AdminUser } from './types'
 import { UserProfileTab } from './UserProfileTab'
 import { UserEntrenamientoTab } from './UserEntrenamientoTab'
 import { UserNutricionNuevoTab } from './UserNutricionNuevoTab'
+import { useToast } from '@/components/ui/ToastProvider'
 
 interface Props {
   user: AdminUser
@@ -25,11 +26,11 @@ const tabBtnCls = (active: boolean) =>
 type DrawerTab = 'perfil' | 'entrenamiento' | 'nutricion'
 
 export function UserDetailModal({ user, onClose, onRoleChanged, onAppointmentCreated }: Props) {
+  const { toast } = useToast()
   const [drawerTab, setDrawerTab] = useState<DrawerTab>('perfil')
   const [showApptModal, setShowApptModal] = useState(false)
   const [apptForm, setApptForm] = useState({ fecha: '', tipo: 'CONSULTA_NUTRICIONAL', duracion: 60, notas: '' })
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
 
   async function handleSchedule() {
     if (!apptForm.fecha) return
@@ -41,9 +42,11 @@ export function UserDetailModal({ user, onClose, onRoleChanged, onAppointmentCre
         body: JSON.stringify({ userId: user.id, fecha: apptForm.fecha, tipo: apptForm.tipo, duracion: apptForm.duracion, notas: apptForm.notas || undefined }),
       })
       if (res.ok) {
-        setSaved(true)
+        toast({ message: 'Turno agendado correctamente', type: 'success' })
         onAppointmentCreated()
-        setTimeout(() => { setSaved(false); setShowApptModal(false) }, 2000)
+        setShowApptModal(false)
+      } else {
+        toast({ message: 'Error al agendar turno', type: 'error' })
       }
     } finally {
       setSaving(false)
@@ -53,7 +56,7 @@ export function UserDetailModal({ user, onClose, onRoleChanged, onAppointmentCre
   return (
     <>
       <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
-      <aside className="fixed inset-y-0 right-0 w-full sm:w-[420px] bg-white shadow-xl z-50 flex flex-col overflow-hidden">
+      <aside role="dialog" aria-modal="true" aria-label="Detalle de usuario" className="fixed inset-y-0 right-0 w-full sm:w-[420px] bg-white shadow-xl z-50 flex flex-col overflow-hidden">
 
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-3">
@@ -126,7 +129,6 @@ export function UserDetailModal({ user, onClose, onRoleChanged, onAppointmentCre
               </div>
             </div>
             <div className="flex gap-3 px-6 py-4 border-t border-gray-100 justify-end">
-              {saved && <span className="text-sm text-emerald-600 self-center">✓ Turno agendado</span>}
               <button onClick={() => setShowApptModal(false)} className="border border-gray-300 text-gray-600 hover:bg-gray-50 rounded-lg px-4 py-2 text-sm font-medium">Cancelar</button>
               <button
                 onClick={handleSchedule}

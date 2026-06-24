@@ -28,16 +28,20 @@ function Avatar({ inicial, size = "md" }: { inicial: string; size?: "sm" | "md" 
 
 export function ChatView({
   mensajesIniciales,
+  hasMoreIniciales,
   userId,
   profileId,
   isAdmin,
 }: {
   mensajesIniciales: Mensaje[]
+  hasMoreIniciales: boolean
   userId: string
   profileId: string
   isAdmin: boolean
 }) {
   const [mensajes, setMensajes] = useState<Mensaje[]>(mensajesIniciales)
+  const [hasMore, setHasMore] = useState(hasMoreIniciales)
+  const [cargandoAnteriores, setCargandoAnteriores] = useState(false)
   const [texto, setTexto] = useState("")
   const [enviando, setEnviando] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -79,6 +83,30 @@ export function ChatView({
       getPusherClient().unsubscribe("chat-comunidad")
     }
   }, [scrollBottom])
+
+  async function cargarAnteriores() {
+    if (!hasMore || cargandoAnteriores || mensajes.length === 0) return
+    setCargandoAnteriores(true)
+    const oldest = mensajes[0].createdAt
+    try {
+      const res = await fetch(`/api/chat/mensajes?before=${encodeURIComponent(oldest)}`)
+      if (!res.ok) return
+      const data = await res.json() as { mensajes: Mensaje[]; hasMore: boolean }
+      const scrollEl = scrollRef.current
+      const prevScrollHeight = scrollEl?.scrollHeight ?? 0
+      setMensajes((prev) => [...data.mensajes, ...prev])
+      setHasMore(data.hasMore)
+      requestAnimationFrame(() => {
+        if (scrollEl) {
+          scrollEl.scrollTop = scrollEl.scrollHeight - prevScrollHeight
+        }
+      })
+    } catch {
+      // silent
+    } finally {
+      setCargandoAnteriores(false)
+    }
+  }
 
   async function enviar() {
     const contenido = texto.trim()
@@ -139,6 +167,18 @@ export function ChatView({
         onScroll={onScroll}
         className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
       >
+        {hasMore && (
+          <div className="text-center py-2">
+            <button
+              onClick={cargarAnteriores}
+              disabled={cargandoAnteriores}
+              className="text-xs text-emerald-600 hover:underline disabled:opacity-50"
+            >
+              {cargandoAnteriores ? "Cargando..." : "Cargar mensajes anteriores"}
+            </button>
+          </div>
+        )}
+
         {mensajes.length === 0 && (
           <div className="text-center py-16 text-gray-400 text-sm">
             <div className="text-4xl mb-3">💬</div>

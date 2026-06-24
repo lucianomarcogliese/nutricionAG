@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import cloudinary from "@/lib/cloudinary"
+import { logger } from "@/lib/logger"
 
 function extractPublicId(url: string): string {
   // https://res.cloudinary.com/cloud/image/upload/v123/folder/file.jpg
@@ -92,7 +93,7 @@ export async function PATCH(
     const updated = await prisma.testimonio.update({ where: { id }, data: updates })
     return NextResponse.json({ testimonio: updated })
   } catch (error) {
-    console.error("PATCH /api/admin/testimonios/[id] error:", error instanceof Error ? error.message : error)
+    logger.error("PATCH /api/admin/testimonios/[id] error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al actualizar testimonio" }, { status: 500 })
   }
 }
@@ -122,7 +123,7 @@ export async function DELETE(
     await prisma.testimonio.delete({ where: { id } })
     return NextResponse.json({ ok: true })
   } catch (error) {
-    console.error("DELETE /api/admin/testimonios/[id] error:", error instanceof Error ? error.message : error)
+    logger.error("DELETE /api/admin/testimonios/[id] error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al eliminar testimonio" }, { status: 500 })
   }
 }

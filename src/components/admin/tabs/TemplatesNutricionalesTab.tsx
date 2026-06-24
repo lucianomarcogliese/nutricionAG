@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 type ObjetivoPlan = 'DEFICIT_CALORICO' | 'GANANCIA_MUSCULAR' | 'MANTENIMIENTO' | 'VEGETARIANO' | 'SIN_TACC' | 'PERSONALIZADO'
 
@@ -75,6 +76,7 @@ function defaultComidas(): TemplateComida[] {
 }
 
 export function TemplatesNutricionalesTab() {
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [templates, setTemplates] = useState<TemplateSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [editingTemplate, setEditingTemplate] = useState<TemplateFull | null>(null)
@@ -172,7 +174,7 @@ export function TemplatesNutricionalesTab() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('¿Eliminar este template? Esta acción no se puede deshacer.')) return
+    setPendingDeleteId(null)
     setDeletingId(id)
     try {
       await fetch(`/api/admin/templates-nutricionales/${id}`, { method: 'DELETE' })
@@ -385,7 +387,7 @@ export function TemplatesNutricionalesTab() {
                   <td className="px-4 py-3">
                     <div className="flex gap-2 justify-end">
                       <button onClick={() => openEditor(t.id)} className="text-xs text-emerald-600 hover:text-emerald-800 font-medium">Editar</button>
-                      <button onClick={() => handleDelete(t.id)} disabled={deletingId === t.id} className="text-xs text-red-400 hover:text-red-600 font-medium disabled:opacity-40">
+                      <button onClick={() => setPendingDeleteId(t.id)} disabled={deletingId === t.id} className="text-xs text-red-400 hover:text-red-600 font-medium disabled:opacity-40">
                         {deletingId === t.id ? '...' : 'Eliminar'}
                       </button>
                     </div>
@@ -423,6 +425,14 @@ export function TemplatesNutricionalesTab() {
             </div>
           </div>
         </div>
+      )}
+
+      {pendingDeleteId && (
+        <ConfirmDialog
+          message="¿Eliminar este template? Esta acción no se puede deshacer."
+          onConfirm={() => handleDelete(pendingDeleteId)}
+          onCancel={() => setPendingDeleteId(null)}
+        />
       )}
     </div>
   )

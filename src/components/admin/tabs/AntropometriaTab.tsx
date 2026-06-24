@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Search } from "lucide-react"
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import { calcularTodo, type SexCalc, type InputMedidas, type ResultadosCalculados } from "@/lib/antropometria-calculos"
 
 interface UserOption {
@@ -563,6 +564,7 @@ function FieldInput({ label, name, value, onChange, step = "0.1", unit, fixed }:
 // ── Componente principal ───────────────────────────────────────────────────────
 
 export function AntropometriaTab() {
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [users, setUsers] = useState<UserOption[]>([])
   const [nutritionists, setNutritionists] = useState<Nutricionista[]>([])
   const [selectedUserId, setSelectedUserId] = useState("")
@@ -639,7 +641,7 @@ export function AntropometriaTab() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("¿Eliminar esta medición?")) return
+    setPendingDeleteId(null)
     setDeletingId(id)
     try {
       await fetch(`/api/admin/antropometria/entry/${id}`, { method: "DELETE" })
@@ -828,7 +830,7 @@ export function AntropometriaTab() {
                           <Search size={15} />
                         </button>
                         <button
-                          onClick={() => handleDelete(item.id)}
+                          onClick={() => setPendingDeleteId(item.id)}
                           disabled={deletingId === item.id}
                           className="text-xs text-red-400 hover:text-red-600 transition-colors disabled:opacity-50"
                         >
@@ -967,6 +969,14 @@ export function AntropometriaTab() {
           sexo={(selectedUser?.profile?.sex as SexCalc) ?? "FEMALE"}
           edad={selectedUser?.profile?.age ?? 25}
           onClose={() => setModalMedicion(null)}
+        />
+      )}
+
+      {pendingDeleteId && (
+        <ConfirmDialog
+          message="¿Eliminar esta medición? Esta acción no se puede deshacer."
+          onConfirm={() => handleDelete(pendingDeleteId)}
+          onCancel={() => setPendingDeleteId(null)}
         />
       )}
     </div>

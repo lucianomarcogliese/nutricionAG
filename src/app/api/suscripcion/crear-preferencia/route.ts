@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { MercadoPagoConfig, Preference } from "mercadopago"
+import { logger } from "@/lib/logger"
 
 const mpClient = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -68,8 +69,8 @@ export async function POST(req: NextRequest) {
       initPoint: preference.init_point,
     })
   } catch (error) {
-    console.error('MP Error completo:', JSON.stringify(error, null, 2))
-    console.error('MP Error message:', error instanceof Error ? error.message : String(error))
+    logger.error('MP Error completo:', JSON.stringify(error, null, 2))
+    logger.error('MP Error message:', error instanceof Error ? error.message : String(error))
     return NextResponse.json({ error: 'Error al crear preferencia de pago', detail: String(error) }, { status: 500 })
   }
 }

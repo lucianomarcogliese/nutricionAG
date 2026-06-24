@@ -4,6 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { getPermisos } from "@/lib/permisos"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
+import { getProfileId } from "@/lib/profile-utils"
 import { ChatView } from "@/components/chat/ChatView"
 
 type MensajeRow = {
@@ -53,20 +54,21 @@ export default async function ChatPage() {
     )
   }
 
-  const profileRows = await prisma.$queryRaw<{ id: string }[]>(
-    Prisma.sql`SELECT id FROM "Profile" WHERE "userId" = ${session.user.id} LIMIT 1`
-  )
-  const profileId = profileRows[0]?.id ?? ""
+  const profileId = await getProfileId(session.user.id) ?? ""
 
   const mensajesRows = await prisma.$queryRaw<MensajeRow[]>(
     Prisma.sql`
       SELECT m.id, m.contenido, m."profileId", m."createdAt", p."fullName"
       FROM "ChatMessage" m
       JOIN "Profile" p ON p.id = m."profileId"
-      ORDER BY m."createdAt" ASC
-      LIMIT 50
+      ORDER BY m."createdAt" DESC
+      LIMIT 51
     `
   )
+
+  const hasMore = mensajesRows.length > 50
+  if (hasMore) mensajesRows.pop()
+  mensajesRows.reverse()
 
   const mensajes = mensajesRows.map((m) => ({
     ...m,
@@ -76,6 +78,7 @@ export default async function ChatPage() {
   return (
     <ChatView
       mensajesIniciales={mensajes}
+      hasMoreIniciales={hasMore}
       userId={session.user.id}
       profileId={profileId}
       isAdmin={session.user.role === "ADMIN"}

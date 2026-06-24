@@ -1,9 +1,11 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
 import { pusherServer } from "@/lib/pusher"
+import { getProfileId } from "@/lib/profile-utils"
+import { logger } from "@/lib/logger"
 
 type MsgRow = {
   id: string
@@ -13,13 +15,6 @@ type MsgRow = {
   esNutricionista: boolean
   leido: boolean
   createdAt: Date
-}
-
-async function getProfileId(userId: string): Promise<string | null> {
-  const rows = await prisma.$queryRaw<{ id: string }[]>(
-    Prisma.sql`SELECT id FROM "Profile" WHERE "userId" = ${userId} LIMIT 1`
-  )
-  return rows[0]?.id ?? null
 }
 
 async function getConversacion(conversacionId: string) {
@@ -68,7 +63,7 @@ export async function GET(
       mensajes: mensajes.map((m) => ({ ...m, createdAt: m.createdAt.toISOString() })),
     })
   } catch (error) {
-    console.error("GET /api/mensajes/[conversacionId] error:", error)
+    logger.error("GET /api/mensajes/[conversacionId] error:", error)
     return NextResponse.json({ error: "Error al obtener mensajes" }, { status: 500 })
   }
 }
@@ -121,7 +116,7 @@ export async function POST(
 
     return NextResponse.json({ mensaje: { ...mensaje, createdAt: mensaje.createdAt.toISOString() } }, { status: 201 })
   } catch (error) {
-    console.error("POST /api/mensajes/[conversacionId] error:", error)
+    logger.error("POST /api/mensajes/[conversacionId] error:", error)
     return NextResponse.json({ error: "Error al enviar mensaje" }, { status: 500 })
   }
 }

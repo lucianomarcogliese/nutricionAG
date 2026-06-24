@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
+import { logger } from "@/lib/logger"
 
 export async function POST(
   req: NextRequest,
@@ -51,7 +52,7 @@ export async function POST(
 
     return NextResponse.json({ item }, { status: 201 })
   } catch (error) {
-    console.error("POST /api/nutricion/meals/[id]/items error:", error instanceof Error ? error.message : error)
+    logger.error("POST /api/nutricion/meals/[id]/items error:", error instanceof Error ? error.message : error)
     return NextResponse.json({ error: "Error al agregar el alimento" }, { status: 500 })
   }
 }
