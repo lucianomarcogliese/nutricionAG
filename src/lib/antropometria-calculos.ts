@@ -46,6 +46,11 @@ export interface ResultadosCalculados {
   masaResidualKg?: number
   masaPielKg?: number
   areaSuperficial?: number
+  scoreZAdiposa?: number
+  scoreZMuscular?: number
+  scoreZResidual?: number
+  scoreZOseaCuerpo?: number
+  scoreZOseaCabeza?: number
   endomorfismo?: number
   mesomorfismo?: number
   ectomorfismo?: number
@@ -322,6 +327,7 @@ export function calcularTodo(input: InputMedidas): ResultadosCalculados {
       pantorrilla: input.plieguePantorrilla!,
     })
     result.masaAdiposaKg = Math.round(adiposa.masaAdiposaKg(input.pesoKg) * 10) / 10
+    result.scoreZAdiposa = Math.round(adiposa.scoreZ * 100) / 100
   }
 
   // Masa Muscular — Lee 5 perímetros + Phantom Z-score
@@ -349,12 +355,14 @@ export function calcularTodo(input: InputMedidas): ResultadosCalculados {
       input.pliegueSubescapular
     )
     result.masaMuscularKg = Math.round(muscular.masaMuscularKg * 10) / 10
+    result.scoreZMuscular = Math.round(muscular.scoreZ * 100) / 100
   }
 
   // Masa Ósea — cabeza
   if (input.perimetroCabeza !== undefined) {
-    const { masaOseaCabezaKg } = calcularMasaOseaCabeza(input.perimetroCabeza)
+    const { masaOseaCabezaKg, scoreZ: zOseaCab } = calcularMasaOseaCabeza(input.perimetroCabeza)
     result.masaOseaCabezaKg = Math.round(masaOseaCabezaKg * 10) / 10
+    result.scoreZOseaCabeza = Math.round(zOseaCab * 100) / 100
   }
 
   // Masa Ósea — cuerpo (4 diámetros)
@@ -364,7 +372,7 @@ export function calcularTodo(input: InputMedidas): ResultadosCalculados {
     input.diametroBiepicondileoHumeral !== undefined &&
     input.diametroBiepicondileoFemoral !== undefined
   ) {
-    const { masaOseaCuerpoKg } = calcularMasaOseaCuerpo(
+    const { masaOseaCuerpoKg, scoreZ: zOseaCuerpo } = calcularMasaOseaCuerpo(
       input.tallaCm,
       input.diametroBiacromial,
       input.diametroBiiliocrestideo,
@@ -372,6 +380,7 @@ export function calcularTodo(input: InputMedidas): ResultadosCalculados {
       input.diametroBiepicondileoFemoral
     )
     result.masaOseaCuerpoKg = Math.round(masaOseaCuerpoKg * 10) / 10
+    result.scoreZOseaCuerpo = Math.round(zOseaCuerpo * 100) / 100
 
     if (result.masaOseaCabezaKg !== undefined) {
       result.masaOseaKg = Math.round((result.masaOseaCabezaKg + masaOseaCuerpoKg) * 10) / 10
@@ -386,7 +395,7 @@ export function calcularTodo(input: InputMedidas): ResultadosCalculados {
     input.diametroToraxTransverso !== undefined &&
     input.diametroToraxAnteroposterior !== undefined
   ) {
-    const { masaResidualKg } = calcularMasaResidual(
+    const { masaResidualKg, scoreZ: zResidual } = calcularMasaResidual(
       input.tallaSentado,
       input.cinturaMinima,
       input.pliegueAbdominal,
@@ -394,6 +403,7 @@ export function calcularTodo(input: InputMedidas): ResultadosCalculados {
       input.diametroToraxAnteroposterior
     )
     result.masaResidualKg = Math.round(masaResidualKg * 10) / 10
+    result.scoreZResidual = Math.round(zResidual * 100) / 100
   }
 
   // Somatotipo Heath & Carter

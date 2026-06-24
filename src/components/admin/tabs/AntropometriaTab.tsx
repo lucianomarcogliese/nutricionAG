@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { calcularTodo } from "@/lib/antropometria-calculos"
+import { Search } from "lucide-react"
+import { calcularTodo, type SexCalc, type InputMedidas, type ResultadosCalculados } from "@/lib/antropometria-calculos"
 
 interface UserOption {
   id: string
@@ -326,6 +327,214 @@ function Preview({ form, sexo, edad }: { form: FormState; sexo: string | null; e
   )
 }
 
+// ── Fraccionamiento 5 Componentes ─────────────────────────────────────────────
+
+function medicionToInput(m: Antropometria, sexo: SexCalc, edad: number): InputMedidas {
+  return {
+    pesoKg: m.pesoKg,
+    tallaCm: m.tallaCm,
+    edad,
+    sexo,
+    tallaSentado: m.tallaSentado ?? undefined,
+    cinturaMinima: m.cinturaMinima ?? undefined,
+    caderaMaxima: m.caderaMaxima ?? undefined,
+    brazoRelajado: m.brazoRelajado ?? undefined,
+    brazoFlexionado: m.brazoFlexionado ?? undefined,
+    perimetroAntebrazo: m.perimetroAntebrazo ?? undefined,
+    toraxMesoesternal: m.toraxMesoesternal ?? undefined,
+    musloSuperior: m.musloSuperior ?? undefined,
+    pantorrillaMaxima: m.pantorrillaMaxima ?? undefined,
+    pliegueSubescapular: m.pliegueSubescapular ?? undefined,
+    pliegueTriceps: m.pliegueTriceps ?? undefined,
+    pliegueSupraespinal: m.pliegueSupraespinal ?? undefined,
+    pliegueAbdominal: m.pliegueAbdominal ?? undefined,
+    pliegueMusloMedial: m.pliegueMusloMedial ?? undefined,
+    plieguePantorrilla: m.plieguePantorrilla ?? undefined,
+    diametroBiacromial: m.diametroBiacromial ?? undefined,
+    diametroBiiliocrestideo: m.diametroBiiliocrestideo ?? undefined,
+    diametroBiepicondileoHumeral: m.diametroBiepicondileoHumeral ?? undefined,
+    diametroBiepicondileoFemoral: m.diametroBiepicondileoFemoral ?? undefined,
+    diametroToraxTransverso: m.diametroToraxTransverso ?? undefined,
+    diametroToraxAnteroposterior: m.diametroToraxAnteroposterior ?? undefined,
+    perimetroCabeza: m.perimetroCabeza ?? undefined,
+  }
+}
+
+function calcAjustado(masa: number, pesoEstructurado: number, pesoReal: number) {
+  const diff = pesoEstructurado - pesoReal
+  return masa - diff * (masa / pesoEstructurado)
+}
+
+function calcPesoEstructurado(c: ResultadosCalculados) {
+  const { masaAdiposaKg: a, masaMuscularKg: m, masaResidualKg: r, masaOseaKg: o, masaPielKg: p } = c
+  if (a === undefined || m === undefined || r === undefined || o === undefined || p === undefined) return null
+  return a + m + r + o + p
+}
+
+function ScoreZCell({ z }: { z: number | undefined }) {
+  if (z === undefined) return <span className="text-gray-300">—</span>
+  const color = Math.abs(z) <= 1 ? "text-emerald-600" : Math.abs(z) <= 2 ? "text-amber-500" : "text-red-500"
+  return <span className={color}>{z.toFixed(2)}</span>
+}
+
+function DifCell({ dif, goodDir }: { dif: number | null; goodDir: "up" | "down" }) {
+  if (dif === null) return <span className="text-gray-300">—</span>
+  if (dif === 0) return <span className="text-gray-400">0.000</span>
+  const isGood = goodDir === "down" ? dif < 0 : dif > 0
+  const color = isGood ? "text-emerald-600" : "text-rose-500"
+  const sign = dif > 0 ? "+" : ""
+  return <span className={color}>{sign}{dif.toFixed(3)}</span>
+}
+
+function FraccionamientoModal({
+  item,
+  prev,
+  sexo,
+  edad,
+  onClose,
+}: {
+  item: Antropometria
+  prev: Antropometria | null
+  sexo: SexCalc
+  edad: number
+  onClose: () => void
+}) {
+  const calc = calcularTodo(medicionToInput(item, sexo, edad))
+  const prevCalc = prev ? calcularTodo(medicionToInput(prev, sexo, edad)) : null
+
+  const pe = calcPesoEstructurado(calc)
+  const prevPe = prevCalc ? calcPesoEstructurado(prevCalc) : null
+
+  function ajustar(masa: number, pesoReal: number, pesoEstr: number) {
+    return calcAjustado(masa, pesoEstr, pesoReal)
+  }
+
+  function prevDif(masa: number | undefined, prevMasaField: number | undefined): number | null {
+    if (!prevCalc || masa === undefined || prevMasaField === undefined || !prevPe) return null
+    const adj = pe ? ajustar(masa, item.pesoKg, pe) : null
+    const prevAdj = ajustar(prevMasaField, prev!.pesoKg, prevPe)
+    if (adj === null) return null
+    return Math.round((adj - prevAdj) * 1000) / 1000
+  }
+
+  const incomplete = pe === null
+
+  type FracRow = {
+    label: string
+    masa: number | undefined
+    scoreZ: number | undefined
+    prevMasa: number | undefined
+    goodDir: "up" | "down"
+  }
+
+  const rows: FracRow[] = [
+    { label: "Masa Adiposa",   masa: calc.masaAdiposaKg,  scoreZ: calc.scoreZAdiposa,   prevMasa: prevCalc?.masaAdiposaKg,  goodDir: "down" },
+    { label: "Masa Muscular",  masa: calc.masaMuscularKg, scoreZ: calc.scoreZMuscular,  prevMasa: prevCalc?.masaMuscularKg, goodDir: "up"   },
+    { label: "Masa Residual",  masa: calc.masaResidualKg, scoreZ: calc.scoreZResidual,  prevMasa: prevCalc?.masaResidualKg, goodDir: "down" },
+    { label: "Masa Ósea",     masa: calc.masaOseaKg,     scoreZ: calc.scoreZOseaCuerpo, prevMasa: prevCalc?.masaOseaKg,     goodDir: "up"   },
+    { label: "Masa de Piel",   masa: calc.masaPielKg,     scoreZ: undefined,            prevMasa: prevCalc?.masaPielKg,     goodDir: "down" },
+  ]
+
+  const totalDif = (prevCalc && prev)
+    ? Math.round((item.pesoKg - prev.pesoKg) * 1000) / 1000
+    : null
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div>
+            <h2 className="font-bold text-gray-800 text-base">Fraccionamiento 5 Componentes</h2>
+            <p className="text-xs text-gray-400 mt-0.5">
+              D. Kerr, 1988 · {new Date(item.fecha).toLocaleDateString("es-AR")} · {item.pesoKg} kg
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-lg"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-4 overflow-x-auto">
+          {incomplete ? (
+            <div className="text-sm text-gray-500 py-4">
+              <p className="font-medium text-gray-700 mb-2">Datos insuficientes para el fraccionamiento completo.</p>
+              <p>Se requieren: 6 pliegues, 5 perímetros (brazo relajado, antebrazo, muslo superior, pantorrilla, tórax mesoesternal), talla sentado, cintura mínima, tórax transverso y AP, diámetros biacromial, biiliocrestídeo, humeral y femoral, y perímetro de cabeza.</p>
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-xs text-gray-400 border-b border-gray-100 uppercase tracking-wide">
+                  <th className="text-left py-2 font-medium">Masa</th>
+                  <th className="text-right py-2 font-medium">%</th>
+                  <th className="text-right py-2 font-medium">Kg</th>
+                  <th className="text-right py-2 font-medium">Score-Z</th>
+                  {prevCalc && <th className="text-right py-2 font-medium">Dif.</th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {rows.map((row) => {
+                  const pct = row.masa !== undefined && pe ? (row.masa / pe) * 100 : null
+                  const adj = row.masa !== undefined && pe ? ajustar(row.masa, item.pesoKg, pe) : null
+                  const dif = prevDif(row.masa, row.prevMasa)
+                  return (
+                    <tr key={row.label} className="hover:bg-gray-50">
+                      <td className="py-2.5 text-gray-700 font-medium">{row.label}</td>
+                      <td className="py-2.5 text-right text-gray-500">{pct !== null ? pct.toFixed(2) + "%" : "—"}</td>
+                      <td className="py-2.5 text-right font-semibold text-gray-800">{adj !== null ? adj.toFixed(3) : "—"}</td>
+                      <td className="py-2.5 text-right"><ScoreZCell z={row.scoreZ} /></td>
+                      {prevCalc && <td className="py-2.5 text-right"><DifCell dif={dif} goodDir={row.goodDir} /></td>}
+                    </tr>
+                  )
+                })}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-gray-200 font-bold">
+                  <td className="py-2.5 text-gray-800">Masa Total</td>
+                  <td className="py-2.5 text-right text-gray-500">100%</td>
+                  <td className="py-2.5 text-right text-gray-800">{item.pesoKg.toFixed(3)}</td>
+                  <td className="py-2.5 text-right text-gray-300">—</td>
+                  {prevCalc && <td className="py-2.5 text-right"><DifCell dif={totalDif} goodDir="down" /></td>}
+                </tr>
+              </tfoot>
+            </table>
+          )}
+        </div>
+
+        {/* Footer */}
+        {!incomplete && pe !== null && (
+          <div className="px-6 pb-5 border-t border-gray-50 pt-3">
+            <p className="text-xs text-gray-500 italic">
+              Porcentaje de diferencia ↑ Peso Estructurado − Peso Bruto:{" "}
+              <span className="font-semibold text-gray-700">
+                {Math.abs((pe - item.pesoKg) / item.pesoKg * 100).toFixed(2)}%
+              </span>
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Peso Estructurado: <span className="font-medium">{pe.toFixed(3)} kg</span>
+              {" · "}Peso Bruto: <span className="font-medium">{item.pesoKg} kg</span>
+              {calc.metabolismoBasalHarrisBenedict !== undefined && (
+                <>
+                  {" · "}MB Harris-Benedict: <span className="font-medium">{calc.metabolismoBasalHarrisBenedict} kcal</span>
+                </>
+              )}
+              {calc.metabolismoBasalKleiber !== undefined && (
+                <>
+                  {" · "}Kleiber: <span className="font-medium">{calc.metabolismoBasalKleiber} kcal</span>
+                </>
+              )}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function FieldInput({ label, name, value, onChange, step = "0.1", unit, fixed }: {
   label: string; name: string; value: string; onChange: (v: string) => void
   step?: string; unit?: string; fixed?: boolean
@@ -364,6 +573,7 @@ export function AntropometriaTab() {
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState("")
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [modalMedicion, setModalMedicion] = useState<{ item: Antropometria; prev: Antropometria | null } | null>(null)
 
   useEffect(() => {
     fetch("/api/admin/users?role=USER")
@@ -609,13 +819,22 @@ export function AntropometriaTab() {
                           <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">IMC {item.imc.toFixed(1)}</span>
                         )}
                       </div>
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        disabled={deletingId === item.id}
-                        className="text-xs text-red-400 hover:text-red-600 transition-colors disabled:opacity-50"
-                      >
-                        {deletingId === item.id ? "..." : "Eliminar"}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setModalMedicion({ item, prev })}
+                          className="text-emerald-500 hover:text-emerald-700 p-1 rounded-lg hover:bg-emerald-50 transition-colors"
+                          title="Ver fraccionamiento 5 componentes"
+                        >
+                          <Search size={15} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          disabled={deletingId === item.id}
+                          className="text-xs text-red-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                        >
+                          {deletingId === item.id ? "..." : "Eliminar"}
+                        </button>
+                      </div>
                     </div>
                     <div className="px-4 py-3 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                       {latestSuma !== null && (
@@ -738,6 +957,17 @@ export function AntropometriaTab() {
             )
           })()}
         </>
+      )}
+
+      {/* Modal fraccionamiento */}
+      {modalMedicion && (
+        <FraccionamientoModal
+          item={modalMedicion.item}
+          prev={modalMedicion.prev}
+          sexo={(selectedUser?.profile?.sex as SexCalc) ?? "FEMALE"}
+          edad={selectedUser?.profile?.age ?? 25}
+          onClose={() => setModalMedicion(null)}
+        />
       )}
     </div>
   )
