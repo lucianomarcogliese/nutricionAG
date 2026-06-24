@@ -137,7 +137,7 @@ function ChatPanel({
   }, [conv.id])
 
   useEffect(() => {
-    const channel = getPusherClient().subscribe(`privado-${conv.id}`)
+    const channel = getPusherClient().subscribe(`private-privado-${conv.id}`)
     channel.bind("nuevo-mensaje", (data: Mensaje) => {
       setMensajes((prev) => {
         if (prev.some((m) => m.id === data.id)) return prev
@@ -147,7 +147,7 @@ function ChatPanel({
     })
     return () => {
       channel.unbind_all()
-      getPusherClient().unsubscribe(`privado-${conv.id}`)
+      getPusherClient().unsubscribe(`private-privado-${conv.id}`)
     }
   }, [conv.id, scrollBottom])
 

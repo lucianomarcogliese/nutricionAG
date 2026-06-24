@@ -111,7 +111,7 @@ export async function POST(
       Prisma.sql`UPDATE "Conversacion" SET "ultimoMensaje" = NOW() WHERE id = ${conversacionId}`
     )
 
-    await pusherServer.trigger(`privado-${conversacionId}`, "nuevo-mensaje", {
+    await pusherServer.trigger(`private-privado-${conversacionId}`, "nuevo-mensaje", {
       id: mensaje.id,
       contenido: mensaje.contenido,
       autorId: mensaje.autorId,

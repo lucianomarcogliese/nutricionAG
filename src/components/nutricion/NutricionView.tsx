@@ -65,17 +65,22 @@ function getGrupoTheme(nombre: string): GrupoTheme {
 export function NutricionView() {
   const [plan, setPlan] = useState<PlanNutricional | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [expandedComidas, setExpandedComidas] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     fetch('/api/nutricion/mi-plan')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("fetch error")
+        return r.json()
+      })
       .then((data: { plan: PlanNutricional | null }) => {
         setPlan(data.plan ?? null)
         if (data.plan?.comidas?.[0]) {
           setExpandedComidas({ [data.plan.comidas[0].id]: true })
         }
       })
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
   }, [])
 
@@ -86,6 +91,16 @@ export function NutricionView() {
         <div className="bg-gray-100 animate-pulse rounded-2xl h-16" />
         <div className="bg-gray-100 animate-pulse rounded-2xl h-16" />
         <div className="bg-gray-100 animate-pulse rounded-2xl h-16" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-8 py-16 text-center">
+        <Leaf className="w-10 h-10 text-gray-300 mx-auto mb-4" />
+        <h1 className="text-base font-semibold text-gray-800 mb-1">Error al cargar tu plan</h1>
+        <p className="text-sm text-gray-500">No pudimos obtener tu plan nutricional. Intentá recargar la página.</p>
       </div>
     )
   }

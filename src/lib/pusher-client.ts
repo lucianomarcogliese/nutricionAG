@@ -12,7 +12,10 @@ export function getPusherClient(): PusherInstance {
     const Ctor: typeof PusherType = PusherJs.default ?? PusherJs
     _client = new Ctor(
       process.env.NEXT_PUBLIC_PUSHER_KEY!,
-      { cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER! }
+      {
+        cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+        authEndpoint: "/api/pusher/auth",
+      }
     )
   }
   return _client

@@ -86,11 +86,11 @@ async function UltimoRegistroPeso({ profileId }: { profileId: string }) {
     )
   } catch {
     return (
-      <Link href="/dashboard/peso" className="block">
-        <Scale className="w-5 h-5 text-gray-400 mb-2" />
+      <div>
+        <Scale className="w-5 h-5 text-gray-300 mb-2" />
         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Peso</p>
-        <p className="text-sm text-emerald-600 mt-1 hover:underline">Registrar →</p>
-      </Link>
+        <p className="text-xs text-gray-400 mt-1">No disponible</p>
+      </div>
     )
   }
 }
