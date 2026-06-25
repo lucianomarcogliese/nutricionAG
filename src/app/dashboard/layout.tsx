@@ -24,9 +24,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 bg-white border-r border-gray-200 p-4 shrink-0">
         <span className="text-emerald-600 font-bold text-lg">Nutrición AG</span>
 
-        <SidebarNavLinks items={NAV_ITEMS} />
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <SidebarNavLinks items={NAV_ITEMS} />
+        </div>
 
-        <div className="absolute bottom-6 left-4">
+        <div className="pt-2 mt-2 border-t border-gray-100 shrink-0">
           <LogoutButton />
         </div>
       </aside>

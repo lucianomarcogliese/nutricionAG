@@ -344,9 +344,11 @@ export function MensajesView({ profileId, userId }: { profileId: string; userId:
   async function abrirNueva() {
     setShowNutris(true)
     if (nutris.length === 0) {
-      const r = await fetch("/api/admin/nutritionists")
-      const d = await r.json()
-      setNutris(d.nutritionists ?? [])
+      const r = await fetch("/api/nutricionistas")
+      if (r.ok) {
+        const d = await r.json()
+        setNutris(d.nutricionistas ?? [])
+      }
     }
   }
 
