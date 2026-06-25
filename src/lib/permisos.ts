@@ -26,11 +26,16 @@ export async function getPermisos(userId: string): Promise<Permisos> {
   })
 
   const sub = profile?.subscription
-  if (!sub || sub.estado !== "ACTIVA") return DEFAULT_PERMISOS
-  if (sub.fechaVencimiento && sub.fechaVencimiento < new Date()) return DEFAULT_PERMISOS
+  const isActive =
+    sub &&
+    sub.estado === "ACTIVA" &&
+    !(sub.fechaVencimiento && sub.fechaVencimiento < new Date())
+
+  // Users with no subscription or expired → fall back to GRATIS plan config
+  const planNombre = isActive ? sub.plan : "GRATIS"
 
   const planConfig = await prisma.planConfig.findUnique({
-    where: { nombre: sub.plan },
+    where: { nombre: planNombre },
     select: { permisos: true },
   })
 

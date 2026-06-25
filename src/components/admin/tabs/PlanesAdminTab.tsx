@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import type { Permisos } from "@/lib/plan-seed"
+import { useToast } from "@/components/ui/ToastProvider"
 
 interface PlanConfig {
   id: string
@@ -62,6 +63,7 @@ function LimitInput({
 }
 
 function PlanCard({ plan, onSaved }: { plan: PlanConfig; onSaved: (updated: PlanConfig) => void }) {
+  const { toast } = useToast()
   const [displayName, setDisplayName] = useState(plan.displayName)
   const [precioARS, setPrecioARS] = useState(plan.precioARS)
   const [activo, setActivo] = useState(plan.activo)
@@ -87,9 +89,11 @@ function PlanCard({ plan, onSaved }: { plan: PlanConfig; onSaved: (updated: Plan
       onSaved(data.plan)
       setStatus("ok")
       setTimeout(() => setStatus("idle"), 2500)
+      toast({ message: `Plan ${plan.displayName} guardado correctamente`, type: "success" })
     } catch {
       setStatus("error")
       setTimeout(() => setStatus("idle"), 3000)
+      toast({ message: "Error al guardar el plan. Intentá de nuevo.", type: "error" })
     } finally {
       setSaving(false)
     }
