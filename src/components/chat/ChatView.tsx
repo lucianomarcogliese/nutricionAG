@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react"
 import { getPusherClient } from "@/lib/pusher-client"
+import { useToast } from "@/components/ui/ToastProvider"
 
 interface Mensaje {
   id: string
@@ -39,6 +40,7 @@ export function ChatView({
   profileId: string
   isAdmin: boolean
 }) {
+  const { toast } = useToast()
   const [mensajes, setMensajes] = useState<Mensaje[]>(mensajesIniciales)
   const [hasMore, setHasMore] = useState(hasMoreIniciales)
   const [cargandoAnteriores, setCargandoAnteriores] = useState(false)
@@ -123,10 +125,12 @@ export function ChatView({
       })
       if (!res.ok) {
         setTexto(contenido)
+        toast({ message: "No se pudo enviar el mensaje. Intentá de nuevo.", type: "error" })
         return
       }
     } catch {
       setTexto(contenido)
+      toast({ message: "No se pudo enviar el mensaje. Intentá de nuevo.", type: "error" })
     } finally {
       setEnviando(false)
     }

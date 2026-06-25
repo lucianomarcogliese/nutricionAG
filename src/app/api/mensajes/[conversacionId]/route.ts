@@ -25,7 +25,7 @@ async function getConversacion(conversacionId: string) {
 }
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ conversacionId: string }> }
 ) {
   try {
@@ -42,15 +42,39 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const mensajes = await prisma.$queryRaw<MsgRow[]>(
-      Prisma.sql`
-        SELECT id, "conversacionId", contenido, "autorId", "esNutricionista", leido, "createdAt"
-        FROM "MensajePrivado"
-        WHERE "conversacionId" = ${conversacionId}
-        ORDER BY "createdAt" ASC
-        LIMIT 50
-      `
-    )
+    const PAGE_SIZE = 50
+    const before = new URL(req.url).searchParams.get("before")
+    let beforeDate: Date | null = null
+    if (before) {
+      beforeDate = new Date(before)
+      if (isNaN(beforeDate.getTime())) {
+        return NextResponse.json({ error: "Parámetro before inválido" }, { status: 400 })
+      }
+    }
+
+    const rows = beforeDate
+      ? await prisma.$queryRaw<MsgRow[]>(
+          Prisma.sql`
+            SELECT id, "conversacionId", contenido, "autorId", "esNutricionista", leido, "createdAt"
+            FROM "MensajePrivado"
+            WHERE "conversacionId" = ${conversacionId} AND "createdAt" < ${beforeDate}
+            ORDER BY "createdAt" DESC
+            LIMIT ${PAGE_SIZE + 1}
+          `
+        )
+      : await prisma.$queryRaw<MsgRow[]>(
+          Prisma.sql`
+            SELECT id, "conversacionId", contenido, "autorId", "esNutricionista", leido, "createdAt"
+            FROM "MensajePrivado"
+            WHERE "conversacionId" = ${conversacionId}
+            ORDER BY "createdAt" DESC
+            LIMIT ${PAGE_SIZE + 1}
+          `
+        )
+
+    const hasMore = rows.length > PAGE_SIZE
+    if (hasMore) rows.pop()
+    rows.reverse()
 
     // Mark nutricionista messages as read for the user
     if (profileId && conv.profileId === profileId) {
@@ -60,7 +84,8 @@ export async function GET(
     }
 
     return NextResponse.json({
-      mensajes: mensajes.map((m) => ({ ...m, createdAt: m.createdAt.toISOString() })),
+      mensajes: rows.map((m) => ({ ...m, createdAt: m.createdAt.toISOString() })),
+      hasMore,
     })
   } catch (error) {
     logger.error("GET /api/mensajes/[conversacionId] error:", error)

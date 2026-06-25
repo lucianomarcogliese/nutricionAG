@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react"
 import { getPusherClient } from "@/lib/pusher-client"
+import { useToast } from "@/components/ui/ToastProvider"
 
 interface Nutricionista {
   id: string
@@ -105,10 +106,14 @@ function ChatPanel({
   onBack: () => void
   onMensajeEnviado: (convId: string) => void
 }) {
+  const { toast } = useToast()
   const [mensajes, setMensajes] = useState<Mensaje[]>([])
+  const [hasMore, setHasMore] = useState(false)
+  const [cargandoAnteriores, setCargandoAnteriores] = useState(false)
   const [texto, setTexto] = useState("")
   const [enviando, setEnviando] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const atBottomRef = useRef(true)
@@ -127,9 +132,14 @@ function ChatPanel({
 
   useEffect(() => {
     setLoading(true)
+    setErrorCarga(false)
     fetch(`/api/mensajes/${conv.id}`)
       .then((r) => r.json())
-      .then((d) => setMensajes(d.mensajes ?? []))
+      .then((d) => {
+        setMensajes(d.mensajes ?? [])
+        setHasMore(d.hasMore ?? false)
+      })
+      .catch(() => setErrorCarga(true))
       .finally(() => {
         setLoading(false)
         setTimeout(() => bottomRef.current?.scrollIntoView(), 50)
@@ -151,20 +161,48 @@ function ChatPanel({
     }
   }, [conv.id, scrollBottom])
 
+  async function cargarAnteriores() {
+    if (!hasMore || cargandoAnteriores || mensajes.length === 0) return
+    setCargandoAnteriores(true)
+    const oldest = mensajes[0].createdAt
+    try {
+      const res = await fetch(`/api/mensajes/${conv.id}?before=${encodeURIComponent(oldest)}`)
+      if (!res.ok) return
+      const data = await res.json() as { mensajes: Mensaje[]; hasMore: boolean }
+      const scrollEl = scrollRef.current
+      const prevScrollHeight = scrollEl?.scrollHeight ?? 0
+      setMensajes((prev) => [...data.mensajes, ...prev])
+      setHasMore(data.hasMore)
+      requestAnimationFrame(() => {
+        if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight - prevScrollHeight
+      })
+    } catch {
+      // silent
+    } finally {
+      setCargandoAnteriores(false)
+    }
+  }
+
   async function enviar() {
     const contenido = texto.trim()
     if (!contenido || enviando || contenido.length > 500) return
     setTexto("")
     setEnviando(true)
     try {
-      await fetch(`/api/mensajes/${conv.id}`, {
+      const res = await fetch(`/api/mensajes/${conv.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contenido }),
       })
+      if (!res.ok) {
+        setTexto(contenido)
+        toast({ message: "No se pudo enviar el mensaje. Intentá de nuevo.", type: "error" })
+        return
+      }
       onMensajeEnviado(conv.id)
     } catch {
       setTexto(contenido)
+      toast({ message: "No se pudo enviar el mensaje. Intentá de nuevo.", type: "error" })
     } finally {
       setEnviando(false)
     }
@@ -195,12 +233,31 @@ function ChatPanel({
 
       {/* Messages */}
       <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50">
+        {hasMore && (
+          <div className="text-center py-2">
+            <button
+              onClick={cargarAnteriores}
+              disabled={cargandoAnteriores}
+              className="text-xs text-emerald-600 hover:underline disabled:opacity-50"
+            >
+              {cargandoAnteriores ? "Cargando..." : "Cargar mensajes anteriores"}
+            </button>
+          </div>
+        )}
         {loading && (
           <div className="flex justify-center py-8">
             <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
-        {!loading && mensajes.length === 0 && (
+        {!loading && errorCarga && (
+          <div className="text-center py-12 text-gray-400 text-sm">
+            <p>No se pudieron cargar los mensajes.</p>
+            <button onClick={() => { setErrorCarga(false); setLoading(true); fetch(`/api/mensajes/${conv.id}`).then(r => r.json()).then(d => { setMensajes(d.mensajes ?? []); setHasMore(d.hasMore ?? false) }).catch(() => setErrorCarga(true)).finally(() => setLoading(false)) }} className="mt-2 text-emerald-600 text-xs hover:underline">
+              Reintentar
+            </button>
+          </div>
+        )}
+        {!loading && !errorCarga && mensajes.length === 0 && (
           <div className="text-center py-12 text-gray-400 text-sm">
             <div className="text-4xl mb-3">✉️</div>
             <p>Escribí tu primer mensaje.</p>
@@ -273,11 +330,13 @@ export function MensajesView({ profileId, userId }: { profileId: string; userId:
   const [creando, setCreando] = useState(false)
   const [showPanel, setShowPanel] = useState(false)
 
-  const fetchConversaciones = useCallback(() => {
-    fetch("/api/mensajes")
-      .then((r) => r.json())
-      .then((d) => setConversaciones(d.conversaciones ?? []))
-      .finally(() => setLoading(false))
+  const fetchConversaciones = useCallback(async (): Promise<Conversacion[]> => {
+    const r = await fetch("/api/mensajes")
+    const d = await r.json()
+    const lista: Conversacion[] = d.conversaciones ?? []
+    setConversaciones(lista)
+    setLoading(false)
+    return lista
   }, [])
 
   useEffect(() => { fetchConversaciones() }, [fetchConversaciones])
@@ -300,24 +359,12 @@ export function MensajesView({ profileId, userId }: { profileId: string; userId:
         body: JSON.stringify({ nutricionistaId }),
       })
       const data = await res.json()
-      await fetchConversaciones()
-      setShowNutris(false)
-      // Find and activate the conversation
       const convId = data.conversacion?.id
+      const lista = await fetchConversaciones()
+      setShowNutris(false)
       if (convId) {
-        setConversaciones((prev) => {
-          const found = prev.find((c) => c.id === convId)
-          if (found) { setActiva(found); setShowPanel(true) }
-          return prev
-        })
-        // Refetch to get updated list then activate
-        setTimeout(() => {
-          setConversaciones((prev) => {
-            const found = prev.find((c) => c.id === convId)
-            if (found) { setActiva(found); setShowPanel(true) }
-            return prev
-          })
-        }, 300)
+        const found = lista.find((c) => c.id === convId)
+        if (found) { setActiva(found); setShowPanel(true) }
       }
     } finally {
       setCreando(false)
