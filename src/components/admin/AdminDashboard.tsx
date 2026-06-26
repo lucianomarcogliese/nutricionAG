@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { signOut } from 'next-auth/react'
 import {
   BarChart3, Users, Calendar, Mail, Image, ChefHat,
-  Tag, Dumbbell, Salad, Stethoscope, Ruler, Settings, Globe
+  Tag, Dumbbell, Salad, Stethoscope, Ruler, Settings, Globe, MessageCircle
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { StatsTab } from './tabs/StatsTab'
@@ -20,14 +20,16 @@ import { NutricionistasTab } from './tabs/NutricionistasTab'
 import { AntropometriaTab } from './tabs/AntropometriaTab'
 import { EjerciciosTab } from './tabs/EjerciciosTab'
 import { TemplatesNutricionalesTab } from './tabs/TemplatesNutricionalesTab'
+import { ChatAdminTab } from './tabs/ChatAdminTab'
 
-type Tab = 'stats' | 'users' | 'calendar' | 'testimonios' | 'recetas' | 'descuentos' | 'planes' | 'mensajes' | 'nutricionistas' | 'antropometria' | 'landing' | 'ejercicios' | 'templates-nutricionales'
+type Tab = 'stats' | 'users' | 'calendar' | 'testimonios' | 'recetas' | 'descuentos' | 'planes' | 'mensajes' | 'chat' | 'nutricionistas' | 'antropometria' | 'landing' | 'ejercicios' | 'templates-nutricionales'
 
 const ALL_NAV: { key: Tab; icon: LucideIcon; label: string; roles: string[] }[] = [
   { key: 'stats',                    icon: BarChart3,     label: 'Estadísticas',     roles: ['ADMIN'] },
   { key: 'users',                    icon: Users,         label: 'Usuarios',         roles: ['ADMIN'] },
   { key: 'calendar',                 icon: Calendar,      label: 'Calendario',       roles: ['ADMIN', 'NUTRICIONISTA', 'RECEPCIONISTA'] },
   { key: 'mensajes',                 icon: Mail,          label: 'Mensajes',         roles: ['ADMIN', 'NUTRICIONISTA'] },
+  { key: 'chat',                     icon: MessageCircle, label: 'Chat',             roles: ['ADMIN'] },
   { key: 'testimonios',              icon: Image,         label: 'Testimonios',      roles: ['ADMIN'] },
   { key: 'recetas',                  icon: ChefHat,       label: 'Recetas',          roles: ['ADMIN'] },
   { key: 'descuentos',               icon: Tag,           label: 'Descuentos',       roles: ['ADMIN'] },
@@ -130,6 +132,7 @@ export function AdminDashboard({
             {active === 'antropometria'  && <AntropometriaTab />}
             {active === 'planes'         && <PlanesAdminTab />}
             {active === 'mensajes'       && <MensajesAdminTab role={role} nutricionistaId={nutricionistaId} />}
+            {active === 'chat'           && <ChatAdminTab />}
             {active === 'landing'        && <LandingTab />}
             {active === 'ejercicios'     && <EjerciciosTab />}
             {active === 'templates-nutricionales' && <TemplatesNutricionalesTab />}

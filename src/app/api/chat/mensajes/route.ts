@@ -22,8 +22,10 @@ export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-    const permisos = await getPermisos(session.user.id)
-    if (!permisos.verChat) return NextResponse.json({ error: "REQUIERE_PRO" }, { status: 403 })
+    if (session.user.role !== "ADMIN") {
+      const permisos = await getPermisos(session.user.id)
+      if (!permisos.verChat) return NextResponse.json({ error: "REQUIERE_PRO" }, { status: 403 })
+    }
 
     const before = new URL(req.url).searchParams.get("before")
     let beforeDate: Date | null = null
@@ -71,8 +73,10 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-    const permisos = await getPermisos(session.user.id)
-    if (!permisos.verChat) return NextResponse.json({ error: "REQUIERE_PRO" }, { status: 403 })
+    if (session.user.role !== "ADMIN") {
+      const permisos = await getPermisos(session.user.id)
+      if (!permisos.verChat) return NextResponse.json({ error: "REQUIERE_PRO" }, { status: 403 })
+    }
 
     const body = await req.json()
     const contenido = (body.contenido ?? "").trim()
