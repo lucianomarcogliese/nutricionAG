@@ -1,4 +1,5 @@
 ﻿import { NextRequest, NextResponse } from "next/server"
+import { revalidateTag } from "next/cache"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
@@ -56,6 +57,8 @@ export async function PATCH(
       where: { nombre },
       data: updateData,
     })
+
+    revalidateTag("plan-config")
 
     return NextResponse.json({ plan })
   } catch (error) {
