@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import { Search } from "lucide-react"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import { calcularTodo, type SexCalc, type InputMedidas, type ResultadosCalculados } from "@/lib/antropometria-calculos"
@@ -328,6 +328,97 @@ function Preview({ form, sexo, edad }: { form: FormState; sexo: string | null; e
   )
 }
 
+// ── Gráfico de torta ──────────────────────────────────────────────────────────
+
+interface PieSegment { label: string; value: number; color: string }
+
+function BodyCompositionPie({ segments }: { segments: PieSegment[] }) {
+  const total = segments.reduce((s, seg) => s + seg.value, 0)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [tooltip, setTooltip] = useState<{ label: string; pct: number; kg: number; x: number; y: number } | null>(null)
+
+  const handleMouseMove = useCallback((e: React.MouseEvent, label: string, pct: number, kg: number) => {
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
+    setTooltip({ label, pct, kg, x: e.clientX - rect.left, y: e.clientY - rect.top })
+  }, [])
+
+  if (total <= 0) return null
+  const cx = 90, cy = 90, r = 75
+  let cumAngle = -Math.PI / 2
+  const paths = segments.map((seg) => {
+    const angle = (seg.value / total) * 2 * Math.PI
+    const start = cumAngle
+    const end = cumAngle + angle
+    cumAngle = end
+    const x1 = cx + r * Math.cos(start), y1 = cy + r * Math.sin(start)
+    const x2 = cx + r * Math.cos(end),   y2 = cy + r * Math.sin(end)
+    const midAngle = start + angle / 2
+    const lr = r * 0.62
+    return {
+      d: `M ${cx} ${cy} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${angle > Math.PI ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`,
+      color: seg.color,
+      pct: Math.round((seg.value / total) * 100),
+      label: seg.label,
+      value: seg.value,
+      lx: cx + lr * Math.cos(midAngle),
+      ly: cy + lr * Math.sin(midAngle),
+      angle,
+    }
+  })
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <div ref={containerRef} className="relative">
+        <svg viewBox="0 0 180 180" className="w-44 h-44 drop-shadow-sm"
+          onMouseLeave={() => setTooltip(null)}>
+          {paths.map((p, i) => (
+            <path key={i} d={p.d} fill={p.color} stroke="white" strokeWidth="2"
+              style={{ cursor: "pointer" }}
+              onMouseMove={(e) => handleMouseMove(e, p.label, p.pct, p.value)}
+              onMouseEnter={(e) => handleMouseMove(e, p.label, p.pct, p.value)}
+            />
+          ))}
+          {paths.map((p, i) =>
+            p.pct >= 8 ? (
+              <text key={i} x={p.lx.toFixed(1)} y={p.ly.toFixed(1)}
+                textAnchor="middle" dominantBaseline="middle"
+                fontSize="9" fontWeight="700" fill="white"
+                style={{ pointerEvents: "none" }}>
+                {p.pct}%
+              </text>
+            ) : null
+          )}
+        </svg>
+        {tooltip && (
+          <div
+            className="pointer-events-none absolute z-10 px-2.5 py-1.5 rounded-lg shadow-lg text-xs text-white"
+            style={{
+              background: "rgba(17,24,39,0.88)",
+              left: tooltip.x + 10,
+              top: tooltip.y - 36,
+              whiteSpace: "nowrap",
+            }}
+          >
+            <p className="font-semibold">{tooltip.label}</p>
+            <p style={{ color: "#9ca3af" }}>{tooltip.pct}% · {tooltip.kg.toFixed(2)} kg</p>
+          </div>
+        )}
+      </div>
+      <div className="w-full space-y-1.5 text-xs">
+        {paths.map((p, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: p.color }} />
+            <span className="text-gray-600 flex-1">{p.label}</span>
+            <span className="font-semibold text-gray-700 tabular-nums">{p.pct}%</span>
+            <span className="text-gray-400 tabular-nums">{p.value.toFixed(2)} kg</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ── Fraccionamiento 5 Componentes ─────────────────────────────────────────────
 
 function medicionToInput(m: Antropometria, sexo: SexCalc, edad: number): InputMedidas {
@@ -442,7 +533,7 @@ function FraccionamientoModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
@@ -460,50 +551,77 @@ function FraccionamientoModal({
         </div>
 
         {/* Body */}
-        <div className="px-6 py-4 overflow-x-auto">
+        <div className="px-6 py-4">
           {incomplete ? (
             <div className="text-sm text-gray-500 py-4">
               <p className="font-medium text-gray-700 mb-2">Datos insuficientes para el fraccionamiento completo.</p>
               <p>Se requieren: 6 pliegues, 5 perímetros (brazo relajado, antebrazo, muslo superior, pantorrilla, tórax mesoesternal), talla sentado, cintura mínima, tórax transverso y AP, diámetros biacromial, biiliocrestídeo, humeral y femoral, y perímetro de cabeza.</p>
             </div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-xs text-gray-400 border-b border-gray-100 uppercase tracking-wide">
-                  <th className="text-left py-2 font-medium">Masa</th>
-                  <th className="text-right py-2 font-medium">%</th>
-                  <th className="text-right py-2 font-medium">Kg</th>
-                  <th className="text-right py-2 font-medium">Score-Z</th>
-                  {prevCalc && <th className="text-right py-2 font-medium">Dif.</th>}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {rows.map((row) => {
-                  const pct = row.masa !== undefined && pe ? (row.masa / pe) * 100 : null
-                  const adj = row.masa !== undefined && pe ? ajustar(row.masa, item.pesoKg, pe) : null
-                  const dif = prevDif(row.masa, row.prevMasa)
-                  return (
-                    <tr key={row.label} className="hover:bg-gray-50">
-                      <td className="py-2.5 text-gray-700 font-medium">{row.label}</td>
-                      <td className="py-2.5 text-right text-gray-500">{pct !== null ? pct.toFixed(2) + "%" : "—"}</td>
-                      <td className="py-2.5 text-right font-semibold text-gray-800">{adj !== null ? adj.toFixed(3) : "—"}</td>
-                      <td className="py-2.5 text-right"><ScoreZCell z={row.scoreZ} /></td>
-                      {prevCalc && <td className="py-2.5 text-right"><DifCell dif={dif} goodDir={row.goodDir} /></td>}
-                    </tr>
-                  )
-                })}
-              </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-gray-200 font-bold">
-                  <td className="py-2.5 text-gray-800">Masa Total</td>
-                  <td className="py-2.5 text-right text-gray-500">100%</td>
-                  <td className="py-2.5 text-right text-gray-800">{item.pesoKg.toFixed(3)}</td>
-                  <td className="py-2.5 text-right text-gray-300">—</td>
-                  {prevCalc && <td className="py-2.5 text-right"><DifCell dif={totalDif} goodDir="down" /></td>}
-                </tr>
-              </tfoot>
-            </table>
-          )}
+          ) : (() => {
+            const PIE_COLORS: Record<string, string> = {
+              "Masa Adiposa":  "#8B8FD4",
+              "Masa Muscular": "#8B2252",
+              "Masa Residual": "#E0E0A0",
+              "Masa Ósea":    "#A8D8E0",
+              "Masa de Piel":  "#6B3670",
+            }
+            const pieSegments: PieSegment[] = rows
+              .filter((row) => row.masa !== undefined && pe !== null)
+              .map((row) => ({
+                label: row.label,
+                value: Math.max(0, ajustar(row.masa!, item.pesoKg, pe!)),
+                color: PIE_COLORS[row.label] ?? "#ccc",
+              }))
+              .filter((s) => s.value > 0)
+
+            return (
+              <div className="flex flex-col md:flex-row gap-6">
+                <div className="flex-1 overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-xs text-gray-400 border-b border-gray-100 uppercase tracking-wide">
+                        <th className="text-left py-2 font-medium">Masa</th>
+                        <th className="text-right py-2 font-medium">%</th>
+                        <th className="text-right py-2 font-medium">Kg</th>
+                        <th className="text-right py-2 font-medium">Score-Z</th>
+                        {prevCalc && <th className="text-right py-2 font-medium">Dif.</th>}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {rows.map((row) => {
+                        const pct = row.masa !== undefined && pe ? (row.masa / pe) * 100 : null
+                        const adj = row.masa !== undefined && pe ? ajustar(row.masa, item.pesoKg, pe) : null
+                        const dif = prevDif(row.masa, row.prevMasa)
+                        return (
+                          <tr key={row.label} className="hover:bg-gray-50">
+                            <td className="py-2.5 text-gray-700 font-medium">{row.label}</td>
+                            <td className="py-2.5 text-right text-gray-500">{pct !== null ? pct.toFixed(2) + "%" : "—"}</td>
+                            <td className="py-2.5 text-right font-semibold text-gray-800">{adj !== null ? adj.toFixed(3) : "—"}</td>
+                            <td className="py-2.5 text-right"><ScoreZCell z={row.scoreZ} /></td>
+                            {prevCalc && <td className="py-2.5 text-right"><DifCell dif={dif} goodDir={row.goodDir} /></td>}
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-gray-200 font-bold">
+                        <td className="py-2.5 text-gray-800">Masa Total</td>
+                        <td className="py-2.5 text-right text-gray-500">100%</td>
+                        <td className="py-2.5 text-right text-gray-800">{item.pesoKg.toFixed(3)}</td>
+                        <td className="py-2.5 text-right text-gray-300">—</td>
+                        {prevCalc && <td className="py-2.5 text-right"><DifCell dif={totalDif} goodDir="down" /></td>}
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+                {pieSegments.length >= 2 && (
+                  <div className="md:w-52 flex-shrink-0 border-t md:border-t-0 md:border-l border-gray-100 md:pl-6 pt-4 md:pt-0">
+                    <BodyCompositionPie segments={pieSegments} />
+                  </div>
+                )}
+              </div>
+            )
+          })()}
         </div>
 
         {/* Footer */}

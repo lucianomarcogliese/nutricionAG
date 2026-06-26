@@ -13,10 +13,10 @@ export async function GET() {
 
     const profile = await prisma.profile.findUnique({
       where: { userId: session.user.id },
-      select: { id: true },
+      select: { id: true, age: true, sex: true },
     })
     if (!profile) {
-      return NextResponse.json({ antropometrias: [] })
+      return NextResponse.json({ antropometrias: [], sex: null, age: null })
     }
 
     const antropometrias = await prisma.antropometria.findMany({
@@ -27,7 +27,7 @@ export async function GET() {
       },
     })
 
-    return NextResponse.json({ antropometrias })
+    return NextResponse.json({ antropometrias, sex: profile.sex, age: profile.age })
   } catch (error) {
     logger.error("GET /api/antropometria error:", error)
     return NextResponse.json({ error: "Error al obtener antropometrías" }, { status: 500 })
