@@ -58,7 +58,7 @@ export async function PATCH(
       data: updateData,
     })
 
-    revalidateTag("plan-config")
+    revalidateTag("plan-config", { expire: 0 })
 
     return NextResponse.json({ plan })
   } catch (error) {
